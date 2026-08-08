@@ -1,0 +1,229 @@
+{
+  "canon_id": "ASET-WORKER-CANON-0.1-ALPHA1",
+  "canonicality": {
+    "conformance_cases": "NORMATIVE_BLACK_BOX_EXPECTATIONS_FOR_BOOTSTRAP_SURFACE",
+    "formal_projection": "ASSURANCE_PROJECTION_DRAFT_NOT_MECHANICALLY_CLOSED",
+    "implementation_precedence": "NONE",
+    "machine_readable_model": "NORMATIVE_CANON",
+    "protocol_schemas": "NORMATIVE_WIRE_PROFILE",
+    "reference_oracle": "NON_NORMATIVE_EXECUTABLE_AID"
+  },
+  "compatibility_standard": {
+    "profile_id": "ASET-WORKER-COMPATIBILITY-STANDARD-V1",
+    "release_claim_status": "NOT_PUBLISHED",
+    "series_id": "ASET-WORKER-COMPATIBILITY-STANDARD"
+  },
+  "composition": {
+    "conflicts": [],
+    "provides": [
+      "EXACT_WORK_LIFECYCLE",
+      "EXPLICIT_NO_RESULT_TERMINAL",
+      "NON_AUTHORITATIVE_PRODUCTIVE_WORK"
+    ],
+    "requires": [
+      "ASET-SEED-COMPATIBILITY-STANDARD@seed-0.3.0-alpha.3"
+    ]
+  },
+  "derived_semantics": {
+    "ACCEPTED": "accepted work that has not been started",
+    "NO_RESULT": "terminal work with one exact NO_RESULT terminal record",
+    "NO_RESULT_NOT_ABSENCE": "NO_RESULT is an explicit terminal assertion and is distinct from a missing terminal record",
+    "NO_RESULT_NOT_FAILURE": "NO_RESULT records terminal absence of result material and does not by itself classify failure cause",
+    "RESULT": "terminal work with one exact RESULT terminal record",
+    "RESULT_NOT_SUCCESS": "RESULT records produced result material and does not imply correctness, acceptance or success",
+    "RUNNING": "started work with no terminal record"
+  },
+  "document_type": "aset-worker-extension-model",
+  "extension_id": "ASET-WORKER-EXTENSION",
+  "formal_assurance": {
+    "canon_to_tla_equivalence": "OPEN",
+    "python_finite_model": "tools/check_finite_model.py",
+    "release_gate": "BLOCKED_UNTIL_FORMAL_CLOSURE",
+    "seed_refinement": "OPEN",
+    "tla_projection": "extension/canonical/formal/WorkerLifecycle.tla",
+    "tlaps_safety_proof": "OPEN",
+    "tlc_config": "extension/canonical/formal/WorkerLifecycle.cfg"
+  },
+  "invariants": [
+    {
+      "id": "WORKER-INV-001",
+      "text": "Every started work identity is already accepted."
+    },
+    {
+      "id": "WORKER-INV-002",
+      "text": "Every RESULT work identity is already started."
+    },
+    {
+      "id": "WORKER-INV-003",
+      "text": "Every NO_RESULT work identity is already started."
+    },
+    {
+      "id": "WORKER-INV-004",
+      "text": "No work identity is both RESULT and NO_RESULT."
+    },
+    {
+      "id": "WORKER-INV-005",
+      "text": "Accepted work metadata is immutable after first admission."
+    },
+    {
+      "id": "WORKER-INV-006",
+      "text": "Terminal work metadata is unique and immutable."
+    },
+    {
+      "id": "WORKER-INV-007",
+      "text": "Absence of a terminal record never implies NO_RESULT."
+    },
+    {
+      "id": "WORKER-INV-008",
+      "text": "Terminal work cannot be started, completed again or reopened."
+    },
+    {
+      "id": "WORKER-INV-009",
+      "text": "Conflicting reuse of an existing work identity is rejected; retry uses fresh identity."
+    },
+    {
+      "id": "WORKER-INV-010",
+      "text": "Worker state transitions create no Authority or effect permission and do not themselves create a Seed Resolution."
+    },
+    {
+      "id": "WORKER-INV-011",
+      "text": "Worker lifecycle transitions are required to preserve the pinned Seed projection; mechanical Seed refinement remains an open assurance gate in this bootstrap."
+    }
+  ],
+  "normative_precedence": "MACHINE_READABLE_CANON",
+  "normative_scope": {
+    "defines": [
+      "exact accepted-work binding",
+      "ACCEPTED and RUNNING lifecycle distinction",
+      "exclusive terminal RESULT and NO_RESULT states",
+      "explicit first-class NO_RESULT terminal record",
+      "fresh retry identity",
+      "non-authority boundary for productive work"
+    ],
+    "does_not_define": [
+      "task discovery or decomposition",
+      "eligibility or assignment",
+      "planning or scheduling",
+      "worker ranking or optimization",
+      "worker implementation technology",
+      "result quality or correctness",
+      "verification policy",
+      "learning or memory",
+      "external effect authorization",
+      "liveness"
+    ]
+  },
+  "operations": [
+    {
+      "id": "WORKER-OP-001",
+      "kind": "ACCEPT_WORK",
+      "role": "STATE_TRANSITION"
+    },
+    {
+      "id": "WORKER-OP-002",
+      "kind": "START_WORK",
+      "role": "STATE_TRANSITION"
+    },
+    {
+      "id": "WORKER-OP-003",
+      "kind": "COMPLETE_WITH_RESULT",
+      "role": "STATE_TRANSITION"
+    },
+    {
+      "id": "WORKER-OP-004",
+      "kind": "COMPLETE_WITH_NO_RESULT",
+      "role": "STATE_TRANSITION"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "WORKER-REQ-001",
+      "text": "Implementations MUST recognize only the lifecycle UNREGISTERED -> ACCEPTED -> RUNNING -> (RESULT XOR NO_RESULT) for one work identity."
+    },
+    {
+      "id": "WORKER-REQ-002",
+      "text": "ACCEPT_WORK MUST bind a fresh work identity to an exact Worker identity, exact target Context binding, exact bounded work specification, exact inputs and exact execution constraints."
+    },
+    {
+      "id": "WORKER-REQ-003",
+      "text": "Accepted work metadata MUST be immutable after first admission; exact replay MAY be idempotent and conflicting identifier reuse MUST be rejected."
+    },
+    {
+      "id": "WORKER-REQ-004",
+      "text": "START_WORK MUST apply only to exact ACCEPTED work and MUST NOT restart RUNNING or terminal work."
+    },
+    {
+      "id": "WORKER-REQ-005",
+      "text": "A terminal record MUST be admitted only for exact RUNNING work and MUST bind the exact accepted-work digest."
+    },
+    {
+      "id": "WORKER-REQ-006",
+      "text": "RESULT and NO_RESULT MUST be mutually exclusive terminal alternatives for one work identity."
+    },
+    {
+      "id": "WORKER-REQ-007",
+      "text": "NO_RESULT MUST be represented by an explicit exact terminal record and MUST NOT be inferred from absence of a result record."
+    },
+    {
+      "id": "WORKER-REQ-008",
+      "text": "RESULT and NO_RESULT terminal records MUST be immutable; terminal work MUST NOT return to ACCEPTED or RUNNING."
+    },
+    {
+      "id": "WORKER-REQ-009",
+      "text": "A retry MUST use a fresh work identity; when a retry relation is declared it MUST bind the exact predecessor terminal record."
+    },
+    {
+      "id": "WORKER-REQ-010",
+      "text": "Worker capability, acceptance, execution, result and evidence MUST NOT create Authority, Seed Resolution, recognized Context mutation or external effect permission by implication."
+    },
+    {
+      "id": "WORKER-REQ-011",
+      "text": "No human, AI model, runtime, tool, solver, robot, provider or other Worker implementation has normative precedence."
+    }
+  ],
+  "schema_version": 1,
+  "semantic_objects": {
+    "terminal_record": "Exact immutable terminal record of kind RESULT or NO_RESULT.",
+    "work_binding": "Exact immutable identity and bindings registered by ACCEPT_WORK.",
+    "worker_binding": "Opaque exact identity of the productive source. Worker type and implementation are non-normative."
+  },
+  "state_machine": {
+    "implicit_absence_state": "UNREGISTERED",
+    "stored_or_derived_states": [
+      "ACCEPTED",
+      "RUNNING",
+      "RESULT",
+      "NO_RESULT"
+    ],
+    "terminal_relation": "XOR",
+    "terminal_states": [
+      "RESULT",
+      "NO_RESULT"
+    ],
+    "transitions": [
+      {
+        "from": "UNREGISTERED",
+        "operation": "ACCEPT_WORK",
+        "to": "ACCEPTED"
+      },
+      {
+        "from": "ACCEPTED",
+        "operation": "START_WORK",
+        "to": "RUNNING"
+      },
+      {
+        "from": "RUNNING",
+        "operation": "COMPLETE_WITH_RESULT",
+        "to": "RESULT"
+      },
+      {
+        "from": "RUNNING",
+        "operation": "COMPLETE_WITH_NO_RESULT",
+        "to": "NO_RESULT"
+      }
+    ]
+  },
+  "status": "SEMANTIC_BOOTSTRAP",
+  "upstream_binding_ref": "upstream/ASET_SEED_BINDING.json",
+  "version": "0.1.0-alpha.0"
+}

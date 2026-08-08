@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "accepted_work_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "work_id": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "work_id",
+    "accepted_work_digest"
+  ],
+  "type": "object"
+}

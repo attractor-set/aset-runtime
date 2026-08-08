@@ -1,0 +1,31 @@
+{
+  "claim_boundary": "Mechanical proof evidence covers the abstract formal surfaces listed above. It does not establish arbitrary Worker runtime implementation refinement, liveness, result correctness, cryptographic correctness, or external-effect safety.",
+  "document_type": "aset-worker-formal-verification-registry",
+  "normative_precedence": "MACHINE_READABLE_CANON",
+  "proofs": [
+    {
+      "evidence": "extension/canonical/assurance/lifecycle-proof.json",
+      "id": "WORKER_TLAPS_SAFETY",
+      "obligations_proved": 66,
+      "status": "MECHANICALLY_PROVED"
+    },
+    {
+      "evidence": "extension/canonical/assurance/canon-refinement-proof.json",
+      "id": "WORKER_CANON_TO_TLA",
+      "obligations_proved": 2,
+      "status": "MECHANICALLY_PROVED"
+    },
+    {
+      "evidence": "extension/canonical/assurance/seed-refinement-proof.json",
+      "id": "WORKER_SEED_REFINEMENT",
+      "obligations_proved": 23,
+      "status": "MECHANICALLY_PROVED"
+    }
+  ],
+  "schema_version": 1,
+  "status": "MECHANICALLY_PROVED",
+  "toolchain": {
+    "tlapm_commit": "4600b24c6d95a25ff081ad37b63b2a01c29d43a5",
+    "tlapm_version": "4600b24"
+  }
+}

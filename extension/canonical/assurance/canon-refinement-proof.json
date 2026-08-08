@@ -1,0 +1,47 @@
+{
+  "artifacts": {
+    "generated_projection": {
+      "module": "WorkerCanonProjection",
+      "path": "extension/canonical/formal/WorkerCanonProjection.tla",
+      "sha256": "sha256:aa744453188fe66579aea97bb36b069834af604753a5d1223db2aa08ca9f01ed"
+    },
+    "proof": {
+      "module": "WorkerCanonRefinementProofs",
+      "path": "extension/canonical/formal/WorkerCanonRefinementProofs.tla",
+      "sha256": "sha256:52bf9b04bd64fe574b9b06740d0ebf315421e30db434e9d7172ea5ca96f94888"
+    },
+    "source_model": {
+      "path": "extension/canonical/source/worker-model.json",
+      "sha256": "sha256:a5d5c842cace0a0a3ad0b43ce913117f55eea403a542d5b8c8faf33fde8d2e77"
+    },
+    "target_model": {
+      "module": "WorkerLifecycle",
+      "path": "extension/canonical/formal/WorkerLifecycle.tla",
+      "sha256": "sha256:da722362d0fc61ba8dff2ef2038b54eac73c0aaeefbd3199aa3a604ae4b76f9c"
+    }
+  },
+  "claim_boundary": [
+    "The proof establishes behavioral equivalence only for the declared standalone generated lifecycle-safety projection and the exact handwritten WorkerLifecycle.tla artifact recorded here.",
+    "It does not establish correctness of the projection generator, natural-language or wire-schema equivalence, digest construction correctness, runtime execution correctness, liveness, result correctness, or implementation refinement."
+  ],
+  "document_type": "aset-worker-canon-refinement-proof-evidence",
+  "normative_precedence": "MACHINE_READABLE_CANON",
+  "profile": "ASET-WORKER-CANON-TLA-PROJECTION-V1",
+  "proof_gate": {
+    "final_theorems": [
+      "WorkerSafetyEquivalentToCanonProjection",
+      "WorkerLifecycleBehaviorallyEquivalentToCanonProjection"
+    ],
+    "obligation_count_semantics": "RECORDED_EVIDENCE_NOT_FIXED_SEMANTIC_CONTRACT",
+    "obligations_proved": 2,
+    "runner": "tools/run_formal_candidate_gate.py",
+    "verdict": "PASS"
+  },
+  "schema_version": 1,
+  "scope": "EXACT_CANON_PROJECTION_TO_HANDWRITTEN_LIFECYCLE_EQUIVALENCE",
+  "status": "MECHANICALLY_PROVED",
+  "tlapm": {
+    "commit": "4600b24c6d95a25ff081ad37b63b2a01c29d43a5",
+    "version": "4600b24"
+  }
+}

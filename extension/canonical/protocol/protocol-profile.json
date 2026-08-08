@@ -1,0 +1,12 @@
+{
+  "document_type": "aset-worker-protocol-profile",
+  "operations": {
+    "ACCEPT_WORK": "schemas/accept-work.schema.json",
+    "COMPLETE_WITH_NO_RESULT": "schemas/complete-with-no-result.schema.json",
+    "COMPLETE_WITH_RESULT": "schemas/complete-with-result.schema.json",
+    "START_WORK": "schemas/start-work.schema.json"
+  },
+  "profile_id": "ASET-WORKER-PROTOCOL-V1",
+  "schema_version": 1,
+  "status": "BOOTSTRAP"
+}

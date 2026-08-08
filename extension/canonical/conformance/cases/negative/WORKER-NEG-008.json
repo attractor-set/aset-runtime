@@ -1,0 +1,36 @@
+{
+  "case_id": "WORKER-NEG-008",
+  "expected": {
+    "accepted": false,
+    "authority_created": false,
+    "code": "WORKER_AUTHORITY_FORBIDDEN",
+    "effect_permitted": false,
+    "seed_resolution_created": false,
+    "state_changed": false,
+    "work_state": "ACCEPTED"
+  },
+  "polarity": "negative",
+  "steps": [
+    {
+      "kind": "ACCEPT_WORK",
+      "payload": {
+        "accepted_work_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "context_binding": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "execution_constraints_binding": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+        "input_bindings": [
+          "sha256:5555555555555555555555555555555555555555555555555555555555555555"
+        ],
+        "predecessor_terminal_binding": null,
+        "work_id": "work:1",
+        "work_spec_binding": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "worker_binding": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+      }
+    },
+    {
+      "kind": "ASSERT_WORKER_AUTHORITY",
+      "payload": {
+        "work_id": "work:1"
+      }
+    }
+  ]
+}

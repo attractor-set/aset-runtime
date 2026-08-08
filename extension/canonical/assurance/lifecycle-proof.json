@@ -1,0 +1,40 @@
+{
+  "artifacts": {
+    "model": {
+      "module": "WorkerLifecycle",
+      "path": "extension/canonical/formal/WorkerLifecycle.tla",
+      "sha256": "sha256:da722362d0fc61ba8dff2ef2038b54eac73c0aaeefbd3199aa3a604ae4b76f9c"
+    },
+    "proof": {
+      "module": "WorkerLifecycleProofs",
+      "path": "extension/canonical/formal/WorkerLifecycleProofs.tla",
+      "sha256": "sha256:c4c06f1387127b5e3903b003e45bea8daf0c14b249a4463c829fd509d178520e"
+    }
+  },
+  "claim_boundary": [
+    "The proof establishes the declared safety properties of the exact WorkerLifecycle.tla and WorkerLifecycleProofs.tla artifacts recorded here.",
+    "It does not establish liveness, result correctness, wire metadata correctness, digest correctness, or implementation refinement."
+  ],
+  "document_type": "aset-worker-lifecycle-proof-evidence",
+  "normative_precedence": "MACHINE_READABLE_CANON",
+  "proof_gate": {
+    "final_theorems": [
+      "SpecImpliesAlwaysWorkerSafety",
+      "SpecImpliesAcceptedAppendOnly",
+      "SpecImpliesStartedAppendOnly",
+      "SpecImpliesTerminalAppendOnly",
+      "SpecImpliesWorkerStateChangesOnlyByRecognizedTransition"
+    ],
+    "obligation_count_semantics": "RECORDED_EVIDENCE_NOT_FIXED_SEMANTIC_CONTRACT",
+    "obligations_proved": 66,
+    "runner": "tools/run_formal_candidate_gate.py",
+    "verdict": "PASS"
+  },
+  "schema_version": 1,
+  "scope": "UNBOUNDED_TLAPS_WORKER_LIFECYCLE_SAFETY",
+  "status": "MECHANICALLY_PROVED",
+  "tlapm": {
+    "commit": "4600b24c6d95a25ff081ad37b63b2a01c29d43a5",
+    "version": "4600b24"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "canon_id": {
+      "const": "ASET-WORKER-CANON-0.1-ALPHA1"
+    },
+    "document_type": {
+      "const": "aset-worker-extension-model"
+    },
+    "extension_id": {
+      "const": "ASET-WORKER-EXTENSION"
+    },
+    "invariants": {
+      "minItems": 11,
+      "type": "array"
+    },
+    "operations": {
+      "maxItems": 4,
+      "minItems": 4,
+      "type": "array"
+    },
+    "requirements": {
+      "minItems": 11,
+      "type": "array"
+    },
+    "status": {
+      "const": "SEMANTIC_BOOTSTRAP"
+    },
+    "version": {
+      "const": "0.1.0-alpha.0"
+    }
+  },
+  "required": [
+    "document_type",
+    "schema_version",
+    "extension_id",
+    "canon_id",
+    "version",
+    "status",
+    "state_machine",
+    "requirements",
+    "invariants",
+    "operations",
+    "formal_assurance"
+  ],
+  "type": "object"
+}

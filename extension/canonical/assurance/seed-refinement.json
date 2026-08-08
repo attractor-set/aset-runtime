@@ -1,0 +1,48 @@
+{
+  "claim_boundary": "Worker lifecycle operations alter only Worker extension state and are stuttering steps with respect to the exact pinned Seed projection.",
+  "document_type": "aset-worker-seed-refinement-relation",
+  "excluded_claims": [
+    "Worker output is a Seed request",
+    "Worker output is a Seed resolution",
+    "Worker evidence creates Authority",
+    "Worker execution grants effect permission",
+    "implementation refinement",
+    "liveness"
+  ],
+  "mapping_candidate": {
+    "module": "WorkerSeedStuttering",
+    "path": "extension/canonical/formal/WorkerSeedStuttering.tla",
+    "sha256": "sha256:bf2144e02e66c375be49d9e31e7a942f2f1c33683198891251d640d979e06f59",
+    "worker_operations": "SEED_STUTTER"
+  },
+  "proof_candidate": {
+    "final_theorems": [
+      "WorkerOperationsPreserveSeedProjection",
+      "WorkerOperationsPreserveSeedOwnedState",
+      "WorkerCompositionRefinesSeedResolutionByStuttering"
+    ],
+    "module": "WorkerSeedStutteringProofs",
+    "path": "extension/canonical/formal/WorkerSeedStutteringProofs.tla",
+    "sha256": "sha256:df0f617892b66331d3b98729d6b48f4b4be76e08295ffe865a0a8dd08c1504ad"
+  },
+  "proof_evidence": {
+    "obligations_proved": 23,
+    "path": "extension/canonical/assurance/seed-refinement-proof.json",
+    "status": "MECHANICALLY_PROVED"
+  },
+  "relation_type": "WORKER_ONLY_OPERATIONS_AS_SEED_STUTTER_PROOF",
+  "schema_version": 1,
+  "status": "MECHANICALLY_PROVED",
+  "upstream_seed": {
+    "canon_id": "ASET-SEED-RESOLUTION-CANON-0.3-ALPHA1",
+    "canon_package_digest": "sha256:c5d48a418466ea7a60fccb7161adbd5ad568174bbc9a28fc03fd7e6e77955d31",
+    "canon_version": "0.3.0-alpha.1",
+    "compatibility_standard": "ASET-SEED-COMPATIBILITY-STANDARD@seed-0.3.0-alpha.3",
+    "materialization": "EXTERNAL_PINNED_SEED_SOURCE_NOT_VENDORED",
+    "module": "SeedResolution",
+    "path": "seed/canonical/formal/SeedResolution.tla",
+    "release_commit": "633c130187b2a2bb42f24cfd66662d475de385d2",
+    "release_tag": "seed-0.3.0-alpha.3",
+    "sha256": "sha256:1c0ebb27ed52da289f0981dcb11b61b6a7fc5c4a030ba434ae0b1d53b286b926"
+  }
+}

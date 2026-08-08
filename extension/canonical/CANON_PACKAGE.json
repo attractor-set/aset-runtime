@@ -1,0 +1,203 @@
+{
+  "canon_id": "ASET-WORKER-CANON-0.1-ALPHA1",
+  "document_type": "aset-worker-canon-package",
+  "files": [
+    {
+      "path": "assurance/canon-refinement-proof.json",
+      "role": "NON_NORMATIVE_ASSURANCE_ARTIFACT",
+      "sha256": "sha256:3e39b7a5f7b06673a999d087832880862776778f79bb514e458118b82494fd40"
+    },
+    {
+      "path": "assurance/canon-tla-refinement.json",
+      "role": "NON_NORMATIVE_ASSURANCE_ARTIFACT",
+      "sha256": "sha256:baa50ac187ecd71acf3af70c70754dcc9706d897b3eae31e5d81dcfc89ba2b8a"
+    },
+    {
+      "path": "assurance/lifecycle-proof-candidate.json",
+      "role": "NON_NORMATIVE_ASSURANCE_ARTIFACT",
+      "sha256": "sha256:66c4294ce8749dfed23490835d42a38820f6525c94705d9994b1b7af3e6d28b6"
+    },
+    {
+      "path": "assurance/lifecycle-proof.json",
+      "role": "NON_NORMATIVE_ASSURANCE_ARTIFACT",
+      "sha256": "sha256:c53501711c7dfc79d54253488c5e258623714d90522021ad158c18348eed3825"
+    },
+    {
+      "path": "assurance/seed-refinement-proof.json",
+      "role": "NON_NORMATIVE_ASSURANCE_ARTIFACT",
+      "sha256": "sha256:141706bfe6f5a8c66ad9b963ca59d1d67cbf3eb174ff5c103460bd5310e98de8"
+    },
+    {
+      "path": "assurance/seed-refinement.json",
+      "role": "NON_NORMATIVE_ASSURANCE_ARTIFACT",
+      "sha256": "sha256:60e3e26481b5e1277feb38eb949be3cd075688559b3b501c1841aef5a792c467"
+    },
+    {
+      "path": "assurance/verification-registry.json",
+      "role": "NON_NORMATIVE_ASSURANCE_ARTIFACT",
+      "sha256": "sha256:d196c0246cbb21d7e71ea5f95b6328f9534658e17f06b1a14bd42bdb2acbbbd9"
+    },
+    {
+      "path": "conformance/cases/negative/WORKER-NEG-001.json",
+      "role": "NORMATIVE_CONFORMANCE_CASE",
+      "sha256": "sha256:d85c22f22afd250704ecaae6990ff075ee02d89a2c79b38b64b9b0e876be4772"
+    },
+    {
+      "path": "conformance/cases/negative/WORKER-NEG-002.json",
+      "role": "NORMATIVE_CONFORMANCE_CASE",
+      "sha256": "sha256:4818e9cb698379a2f9d047becf925350f02d7d13047c8777bf52db3ce30d216e"
+    },
+    {
+      "path": "conformance/cases/negative/WORKER-NEG-003.json",
+      "role": "NORMATIVE_CONFORMANCE_CASE",
+      "sha256": "sha256:71a981acd01e507f2743a85cd0c17af529c78be2868b329b563707a2ebfeb2d3"
+    },
+    {
+      "path": "conformance/cases/negative/WORKER-NEG-004.json",
+      "role": "NORMATIVE_CONFORMANCE_CASE",
+      "sha256": "sha256:2e3ac0384d718aae84dc02c27a8033f6dafbb8d99d8730f866858a8e65a1bc24"
+    },
+    {
+      "path": "conformance/cases/negative/WORKER-NEG-005.json",
+      "role": "NORMATIVE_CONFORMANCE_CASE",
+      "sha256": "sha256:0399d238fbd51cfeb17eb965c46f110a0c75aa8083d0abbdf14daf25886be8a9"
+    },
+    {
+      "path": "conformance/cases/negative/WORKER-NEG-006.json",
+      "role": "NORMATIVE_CONFORMANCE_CASE",
+      "sha256": "sha256:b24e0de21aefd1916e340b3ec33aa33e5ade0404f87ebb7fe69a2c6a3a7a71c3"
+    },
+    {
+      "path": "conformance/cases/negative/WORKER-NEG-007.json",
+      "role": "NORMATIVE_CONFORMANCE_CASE",
+      "sha256": "sha256:c781be91f5c0ad534c5a34706c574fb4fe2f3a0622848c1eb211a160e555874e"
+    },
+    {
+      "path": "conformance/cases/negative/WORKER-NEG-008.json",
+      "role": "NORMATIVE_CONFORMANCE_CASE",
+      "sha256": "sha256:460eceba2e887c65ee56343a3f7cc787904b71fbc28e5877f031870b90aaad6e"
+    },
+    {
+      "path": "conformance/cases/negative/WORKER-NEG-009.json",
+      "role": "NORMATIVE_CONFORMANCE_CASE",
+      "sha256": "sha256:f705ebb9aefacefe4fbbd1317927bb67998c7e08919ad7575d0ea9cf6b73f6a8"
+    },
+    {
+      "path": "conformance/cases/positive/WORKER-POS-001.json",
+      "role": "NORMATIVE_CONFORMANCE_CASE",
+      "sha256": "sha256:3d59d9e9d91608e9d29989b27a98554f20acddbcd6d1e114dad85e17c268fa6c"
+    },
+    {
+      "path": "conformance/cases/positive/WORKER-POS-002.json",
+      "role": "NORMATIVE_CONFORMANCE_CASE",
+      "sha256": "sha256:496d22b5b2a82c327c6349a9f7586d650ee4b63835f38566ed36d21cfbb17186"
+    },
+    {
+      "path": "conformance/cases/positive/WORKER-POS-003.json",
+      "role": "NORMATIVE_CONFORMANCE_CASE",
+      "sha256": "sha256:fb25d7f430f1725c255d4a575fb6611ae8ab36ea80e9b4e767cc882e701da6a0"
+    },
+    {
+      "path": "conformance/cases/positive/WORKER-POS-004.json",
+      "role": "NORMATIVE_CONFORMANCE_CASE",
+      "sha256": "sha256:8b645c9be6bf4de8472a5a31610f56e40b356d3c31ed9534f43bb9d0ef4d8780"
+    },
+    {
+      "path": "conformance/cases/positive/WORKER-POS-005.json",
+      "role": "NORMATIVE_CONFORMANCE_CASE",
+      "sha256": "sha256:05cd331c5987d2087e6397e2c348d80a42e3460c22cf6b24cd5d14e530fe86cb"
+    },
+    {
+      "path": "conformance/cases/positive/WORKER-POS-006.json",
+      "role": "NORMATIVE_CONFORMANCE_CASE",
+      "sha256": "sha256:4eedc7ab044604f7230851d3015c52055864ec1d00d4a3fa06a8aac22771316a"
+    },
+    {
+      "path": "conformance/conformance-profile.json",
+      "role": "NORMATIVE_CONFORMANCE_PROFILE",
+      "sha256": "sha256:887626a2394a69d45d553b850d384e5e7382c33035a274bd409b4e8a09f47131"
+    },
+    {
+      "path": "formal/README.md",
+      "role": "NON_NORMATIVE_ASSURANCE_ARTIFACT",
+      "sha256": "sha256:0e815fef5b0b05f8b9cf2b456807d7eba8428eb62fb115e5cb5789188267a714"
+    },
+    {
+      "path": "formal/WorkerCanonProjection.tla",
+      "role": "NON_NORMATIVE_ASSURANCE_ARTIFACT",
+      "sha256": "sha256:aa744453188fe66579aea97bb36b069834af604753a5d1223db2aa08ca9f01ed"
+    },
+    {
+      "path": "formal/WorkerCanonRefinementProofs.tla",
+      "role": "NON_NORMATIVE_ASSURANCE_ARTIFACT",
+      "sha256": "sha256:52bf9b04bd64fe574b9b06740d0ebf315421e30db434e9d7172ea5ca96f94888"
+    },
+    {
+      "path": "formal/WorkerLifecycle.cfg",
+      "role": "NON_NORMATIVE_ASSURANCE_ARTIFACT",
+      "sha256": "sha256:968f1219000dfa3a28e50ac2b59d3a897afbe557f0a11399e7207397e8e18a5b"
+    },
+    {
+      "path": "formal/WorkerLifecycle.tla",
+      "role": "NON_NORMATIVE_ASSURANCE_ARTIFACT",
+      "sha256": "sha256:da722362d0fc61ba8dff2ef2038b54eac73c0aaeefbd3199aa3a604ae4b76f9c"
+    },
+    {
+      "path": "formal/WorkerLifecycleProofs.tla",
+      "role": "NON_NORMATIVE_ASSURANCE_ARTIFACT",
+      "sha256": "sha256:c4c06f1387127b5e3903b003e45bea8daf0c14b249a4463c829fd509d178520e"
+    },
+    {
+      "path": "formal/WorkerSeedStuttering.tla",
+      "role": "NON_NORMATIVE_ASSURANCE_ARTIFACT",
+      "sha256": "sha256:bf2144e02e66c375be49d9e31e7a942f2f1c33683198891251d640d979e06f59"
+    },
+    {
+      "path": "formal/WorkerSeedStutteringProofs.tla",
+      "role": "NON_NORMATIVE_ASSURANCE_ARTIFACT",
+      "sha256": "sha256:df0f617892b66331d3b98729d6b48f4b4be76e08295ffe865a0a8dd08c1504ad"
+    },
+    {
+      "path": "protocol/protocol-profile.json",
+      "role": "NORMATIVE_PROTOCOL_PROFILE",
+      "sha256": "sha256:0b30e5369c5513b80f41bfd759311bb21e382eb961a2e224e4924afbe0c7590c"
+    },
+    {
+      "path": "protocol/schemas/accept-work.schema.json",
+      "role": "NORMATIVE_WIRE_SCHEMA",
+      "sha256": "sha256:c7e270202323aec9d3731c679a6c50d8fa37ad4be64304986b64d830c1504926"
+    },
+    {
+      "path": "protocol/schemas/complete-with-no-result.schema.json",
+      "role": "NORMATIVE_WIRE_SCHEMA",
+      "sha256": "sha256:32fbda5566ad64583c1f1570558c9baf1b8215c7ee86006ada98a47eff5865ae"
+    },
+    {
+      "path": "protocol/schemas/complete-with-result.schema.json",
+      "role": "NORMATIVE_WIRE_SCHEMA",
+      "sha256": "sha256:3e971270a8e02aebeead11abe52862b414d8ef7306f1553e1f7146bba4d28cd6"
+    },
+    {
+      "path": "protocol/schemas/conformance-case.schema.json",
+      "role": "NORMATIVE_CONFORMANCE_SCHEMA",
+      "sha256": "sha256:09239e5b49bcf3e4560fec96a43aacbe50a50fc4a0eaefe47bcdd57f30099c1a"
+    },
+    {
+      "path": "protocol/schemas/start-work.schema.json",
+      "role": "NORMATIVE_WIRE_SCHEMA",
+      "sha256": "sha256:c0d815faf6d4dab6342c79329541aa11213e23de0b6ed74e0780908ff558620d"
+    },
+    {
+      "path": "protocol/schemas/worker-model.schema.json",
+      "role": "NORMATIVE_CANON_SCHEMA",
+      "sha256": "sha256:9f2586c7c06f616be530a8eccc26b392406752f9b50f893e57e6ba6075241231"
+    },
+    {
+      "path": "source/worker-model.json",
+      "role": "NORMATIVE_MACHINE_CANON",
+      "sha256": "sha256:a5d5c842cace0a0a3ad0b43ce913117f55eea403a542d5b8c8faf33fde8d2e77"
+    }
+  ],
+  "schema_version": 1,
+  "version": "0.1.0-alpha.0"
+}
