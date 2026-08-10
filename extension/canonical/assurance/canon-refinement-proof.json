@@ -3,21 +3,21 @@
     "generated_projection": {
       "module": "WorkerCanonProjection",
       "path": "extension/canonical/formal/WorkerCanonProjection.tla",
-      "sha256": "sha256:aa744453188fe66579aea97bb36b069834af604753a5d1223db2aa08ca9f01ed"
+      "sha256": "sha256:6d8eec29e99704fbc9504ed32a59ea6201dfdf6c3bb22c4e6ba4159e12efba4c"
     },
     "proof": {
       "module": "WorkerCanonRefinementProofs",
       "path": "extension/canonical/formal/WorkerCanonRefinementProofs.tla",
-      "sha256": "sha256:52bf9b04bd64fe574b9b06740d0ebf315421e30db434e9d7172ea5ca96f94888"
+      "sha256": "sha256:1bdca0038df67975409ba61235010843c695f691cd09606bd6b7b74d98b77c81"
     },
     "source_model": {
       "path": "extension/canonical/source/worker-model.json",
-      "sha256": "sha256:a5d5c842cace0a0a3ad0b43ce913117f55eea403a542d5b8c8faf33fde8d2e77"
+      "sha256": "sha256:e7769e1ea41fce4ebf05f66adb03f6c048f3040ec215011c8d070b62a32b8ff0"
     },
     "target_model": {
       "module": "WorkerLifecycle",
       "path": "extension/canonical/formal/WorkerLifecycle.tla",
-      "sha256": "sha256:da722362d0fc61ba8dff2ef2038b54eac73c0aaeefbd3199aa3a604ae4b76f9c"
+      "sha256": "sha256:989b37e70587c00005a48b64642841f99ffc411221942480edf5359299616105"
     }
   },
   "claim_boundary": [
@@ -26,7 +26,7 @@
   ],
   "document_type": "aset-worker-canon-refinement-proof-evidence",
   "normative_precedence": "MACHINE_READABLE_CANON",
-  "profile": "ASET-WORKER-CANON-TLA-PROJECTION-V1",
+  "profile": "ASET-WORKER-CANON-TLA-PROJECTION-V2",
   "proof_gate": {
     "final_theorems": [
       "WorkerSafetyEquivalentToCanonProjection",

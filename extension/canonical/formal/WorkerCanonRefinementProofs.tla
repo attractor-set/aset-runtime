@@ -2,14 +2,13 @@
 EXTENDS WorkerLifecycle, TLAPS
 
 (***************************************************************************
-Behavioral-equivalence proof candidate between the handwritten WorkerLifecycle
-model and the standalone deterministic projection generated from the exact
-machine-readable Worker canon.
+Behavioral-equivalence proof candidate between the handwritten minimized
+WorkerLifecycle model and the standalone deterministic projection generated
+from the exact machine-readable Worker canon.
 ***************************************************************************)
 
 Canon == INSTANCE WorkerCanonProjection
   WITH WorkIds <- WorkIds,
-       accepted <- accepted,
        started <- started,
        resultWorks <- resultWorks,
        noResultWorks <- noResultWorks
@@ -19,13 +18,11 @@ THEOREM WorkerSafetyEquivalentToCanonProjection ==
 PROOF
   BY DEF WorkerSafety,
          TypeOK,
-         StartedImpliesAccepted,
          ResultImpliesStarted,
          NoResultImpliesStarted,
          ResultXorNoResult,
          Canon!CanonWorkerSafety,
          Canon!CanonTypeOK,
-         Canon!CanonStartedImpliesAccepted,
          Canon!CanonResultImpliesStarted,
          Canon!CanonNoResultImpliesStarted,
          Canon!CanonResultXorNoResult
@@ -37,20 +34,20 @@ PROOF
          Init,
          Next,
          RecognizedWorkerTransition,
-         AcceptWork,
          StartWork,
-         CompleteWithResult,
-         CompleteWithNoResult,
+         EndWork,
+         EndWorkWithResult,
+         EndWorkWithNoResult,
          Terminal,
          vars,
          Canon!CanonSpec,
          Canon!CanonInit,
          Canon!CanonNext,
          Canon!CanonRecognizedWorkerTransition,
-         Canon!CanonAcceptWork,
          Canon!CanonStartWork,
-         Canon!CanonCompleteWithResult,
-         Canon!CanonCompleteWithNoResult,
+         Canon!CanonEndWork,
+         Canon!CanonEndWorkWithResult,
+         Canon!CanonEndWorkWithNoResult,
          Canon!CanonTerminal,
          Canon!CanonVars
 

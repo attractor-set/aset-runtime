@@ -1,6 +1,7 @@
 {
   "document_type": "aset-worker-lifecycle-proof-candidate",
   "excluded_claims": [
+    "work-descriptor interpretation",
     "wire metadata correctness",
     "digest correctness",
     "liveness",
@@ -10,19 +11,18 @@
   "model": {
     "module": "WorkerLifecycle",
     "path": "extension/canonical/formal/WorkerLifecycle.tla",
-    "sha256": "sha256:da722362d0fc61ba8dff2ef2038b54eac73c0aaeefbd3199aa3a604ae4b76f9c"
+    "sha256": "sha256:989b37e70587c00005a48b64642841f99ffc411221942480edf5359299616105"
   },
   "proof": {
     "final_theorems": [
       "SpecImpliesAlwaysWorkerSafety",
-      "SpecImpliesAcceptedAppendOnly",
       "SpecImpliesStartedAppendOnly",
       "SpecImpliesTerminalAppendOnly",
       "SpecImpliesWorkerStateChangesOnlyByRecognizedTransition"
     ],
     "module": "WorkerLifecycleProofs",
     "path": "extension/canonical/formal/WorkerLifecycleProofs.tla",
-    "sha256": "sha256:c4c06f1387127b5e3903b003e45bea8daf0c14b249a4463c829fd509d178520e"
+    "sha256": "sha256:8c0d2cb241f1f4f3eec826319dd63e73a3296cfce4bd27b231c17a9d81ee8005"
   },
   "schema_version": 1,
   "status": "PROOF_CANDIDATE_MATERIALIZED"

@@ -2,12 +2,12 @@
 EXTENDS WorkerLifecycle, TLAPS
 
 (***************************************************************************
-Unbounded safety proof for the Worker lifecycle projection.
+Unbounded safety proof candidate for the minimized Worker lifecycle projection.
 
-The proof covers only the abstract lifecycle state represented by
-WorkerLifecycle.tla. Exact wire-level metadata, digest construction, runtime
-execution, liveness, result correctness and implementation refinement remain
-outside this proof boundary.
+The proof covers only the abstract append-only productive-attempt state in
+WorkerLifecycle.tla. Exact wire metadata, digest construction, descriptor
+contents, runtime execution, liveness, result correctness and implementation
+refinement remain outside this proof boundary.
 ***************************************************************************)
 
 THEOREM InitImpliesWorkerSafety ==
@@ -16,23 +16,9 @@ PROOF
   BY DEF Init,
          WorkerSafety,
          TypeOK,
-         StartedImpliesAccepted,
          ResultImpliesStarted,
          NoResultImpliesStarted,
          ResultXorNoResult
-
-THEOREM AcceptWorkPreservesWorkerSafety ==
-  \A w \in WorkIds :
-    WorkerSafety /\ AcceptWork(w) => WorkerSafety'
-PROOF
-  BY DEF WorkerSafety,
-         TypeOK,
-         StartedImpliesAccepted,
-         ResultImpliesStarted,
-         NoResultImpliesStarted,
-         ResultXorNoResult,
-         AcceptWork,
-         Terminal
 
 THEOREM StartWorkPreservesWorkerSafety ==
   \A w \in WorkIds :
@@ -40,46 +26,49 @@ THEOREM StartWorkPreservesWorkerSafety ==
 PROOF
   BY DEF WorkerSafety,
          TypeOK,
-         StartedImpliesAccepted,
          ResultImpliesStarted,
          NoResultImpliesStarted,
          ResultXorNoResult,
          StartWork,
          Terminal
 
-THEOREM CompleteWithResultPreservesWorkerSafety ==
+THEOREM EndWorkWithResultPreservesWorkerSafety ==
   \A w \in WorkIds :
-    WorkerSafety /\ CompleteWithResult(w) => WorkerSafety'
+    WorkerSafety /\ EndWorkWithResult(w) => WorkerSafety'
 PROOF
   BY DEF WorkerSafety,
          TypeOK,
-         StartedImpliesAccepted,
          ResultImpliesStarted,
          NoResultImpliesStarted,
          ResultXorNoResult,
-         CompleteWithResult,
+         EndWorkWithResult,
          Terminal
 
-THEOREM CompleteWithNoResultPreservesWorkerSafety ==
+THEOREM EndWorkWithNoResultPreservesWorkerSafety ==
   \A w \in WorkIds :
-    WorkerSafety /\ CompleteWithNoResult(w) => WorkerSafety'
+    WorkerSafety /\ EndWorkWithNoResult(w) => WorkerSafety'
 PROOF
   BY DEF WorkerSafety,
          TypeOK,
-         StartedImpliesAccepted,
          ResultImpliesStarted,
          NoResultImpliesStarted,
          ResultXorNoResult,
-         CompleteWithNoResult,
+         EndWorkWithNoResult,
          Terminal
+
+THEOREM EndWorkPreservesWorkerSafety ==
+  \A w \in WorkIds, terminalKind \in {"RESULT", "NO_RESULT"} :
+    WorkerSafety /\ EndWork(w, terminalKind) => WorkerSafety'
+PROOF
+  BY EndWorkWithResultPreservesWorkerSafety,
+     EndWorkWithNoResultPreservesWorkerSafety
+     DEF EndWork
 
 THEOREM RecognizedWorkerTransitionPreservesWorkerSafety ==
   WorkerSafety /\ RecognizedWorkerTransition => WorkerSafety'
 PROOF
-  BY AcceptWorkPreservesWorkerSafety,
-     StartWorkPreservesWorkerSafety,
-     CompleteWithResultPreservesWorkerSafety,
-     CompleteWithNoResultPreservesWorkerSafety
+  BY StartWorkPreservesWorkerSafety,
+     EndWorkPreservesWorkerSafety
      DEF RecognizedWorkerTransition
 
 THEOREM StateStutterPreservesWorkerSafety ==
@@ -88,7 +77,6 @@ PROOF
   BY DEF vars,
          WorkerSafety,
          TypeOK,
-         StartedImpliesAccepted,
          ResultImpliesStarted,
          NoResultImpliesStarted,
          ResultXorNoResult
@@ -108,83 +96,37 @@ PROOF
      BoxNextPreservesWorkerSafety
      DEF Spec
 
-THEOREM AcceptWorkSatisfiesAcceptedAppendOnlyStep ==
-  \A w \in WorkIds :
-    AcceptWork(w) => AcceptedAppendOnlyStep
-PROOF
-  BY DEF AcceptWork, AcceptedAppendOnlyStep
-
-THEOREM StartWorkSatisfiesAcceptedAppendOnlyStep ==
-  \A w \in WorkIds :
-    StartWork(w) => AcceptedAppendOnlyStep
-PROOF
-  BY DEF StartWork, AcceptedAppendOnlyStep
-
-THEOREM CompleteWithResultSatisfiesAcceptedAppendOnlyStep ==
-  \A w \in WorkIds :
-    CompleteWithResult(w) => AcceptedAppendOnlyStep
-PROOF
-  BY DEF CompleteWithResult, AcceptedAppendOnlyStep
-
-THEOREM CompleteWithNoResultSatisfiesAcceptedAppendOnlyStep ==
-  \A w \in WorkIds :
-    CompleteWithNoResult(w) => AcceptedAppendOnlyStep
-PROOF
-  BY DEF CompleteWithNoResult, AcceptedAppendOnlyStep
-
-THEOREM NextSatisfiesAcceptedAppendOnlyStep ==
-  Next => AcceptedAppendOnlyStep
-PROOF
-  BY AcceptWorkSatisfiesAcceptedAppendOnlyStep,
-     StartWorkSatisfiesAcceptedAppendOnlyStep,
-     CompleteWithResultSatisfiesAcceptedAppendOnlyStep,
-     CompleteWithNoResultSatisfiesAcceptedAppendOnlyStep
-     DEF Next, RecognizedWorkerTransition
-
-THEOREM BoxNextSatisfiesBoxAcceptedAppendOnlyStep ==
-  [Next]_vars => [AcceptedAppendOnlyStep]_vars
-PROOF
-  BY NextSatisfiesAcceptedAppendOnlyStep
-     DEF vars, AcceptedAppendOnlyStep
-
-THEOREM SpecImpliesAcceptedAppendOnly ==
-  Spec => AcceptedAppendOnly
-PROOF
-  BY PTL,
-     BoxNextSatisfiesBoxAcceptedAppendOnlyStep
-     DEF Spec, AcceptedAppendOnly
-
-THEOREM AcceptWorkSatisfiesStartedAppendOnlyStep ==
-  \A w \in WorkIds :
-    AcceptWork(w) => StartedAppendOnlyStep
-PROOF
-  BY DEF AcceptWork, StartedAppendOnlyStep
-
 THEOREM StartWorkSatisfiesStartedAppendOnlyStep ==
   \A w \in WorkIds :
     StartWork(w) => StartedAppendOnlyStep
 PROOF
   BY DEF StartWork, StartedAppendOnlyStep
 
-THEOREM CompleteWithResultSatisfiesStartedAppendOnlyStep ==
+THEOREM EndWorkWithResultSatisfiesStartedAppendOnlyStep ==
   \A w \in WorkIds :
-    CompleteWithResult(w) => StartedAppendOnlyStep
+    EndWorkWithResult(w) => StartedAppendOnlyStep
 PROOF
-  BY DEF CompleteWithResult, StartedAppendOnlyStep
+  BY DEF EndWorkWithResult, StartedAppendOnlyStep
 
-THEOREM CompleteWithNoResultSatisfiesStartedAppendOnlyStep ==
+THEOREM EndWorkWithNoResultSatisfiesStartedAppendOnlyStep ==
   \A w \in WorkIds :
-    CompleteWithNoResult(w) => StartedAppendOnlyStep
+    EndWorkWithNoResult(w) => StartedAppendOnlyStep
 PROOF
-  BY DEF CompleteWithNoResult, StartedAppendOnlyStep
+  BY DEF EndWorkWithNoResult, StartedAppendOnlyStep
+
+THEOREM EndWorkSatisfiesStartedAppendOnlyStep ==
+  \A w \in WorkIds, terminalKind \in {"RESULT", "NO_RESULT"} :
+    EndWork(w, terminalKind) => StartedAppendOnlyStep
+PROOF
+  BY EndWorkWithResultSatisfiesStartedAppendOnlyStep,
+     EndWorkWithNoResultSatisfiesStartedAppendOnlyStep
+     DEF EndWork
 
 THEOREM NextSatisfiesStartedAppendOnlyStep ==
   Next => StartedAppendOnlyStep
 PROOF
-  BY AcceptWorkSatisfiesStartedAppendOnlyStep,
-     StartWorkSatisfiesStartedAppendOnlyStep,
-     CompleteWithResultSatisfiesStartedAppendOnlyStep,
-     CompleteWithNoResultSatisfiesStartedAppendOnlyStep
+  BY StartWorkSatisfiesStartedAppendOnlyStep,
+     EndWorkSatisfiesStartedAppendOnlyStep
      DEF Next, RecognizedWorkerTransition
 
 THEOREM BoxNextSatisfiesBoxStartedAppendOnlyStep ==
@@ -200,37 +142,37 @@ PROOF
      BoxNextSatisfiesBoxStartedAppendOnlyStep
      DEF Spec, StartedAppendOnly
 
-THEOREM AcceptWorkSatisfiesTerminalAppendOnlyStep ==
-  \A w \in WorkIds :
-    AcceptWork(w) => TerminalAppendOnlyStep
-PROOF
-  BY DEF AcceptWork, TerminalAppendOnlyStep
-
 THEOREM StartWorkSatisfiesTerminalAppendOnlyStep ==
   \A w \in WorkIds :
     StartWork(w) => TerminalAppendOnlyStep
 PROOF
   BY DEF StartWork, TerminalAppendOnlyStep
 
-THEOREM CompleteWithResultSatisfiesTerminalAppendOnlyStep ==
+THEOREM EndWorkWithResultSatisfiesTerminalAppendOnlyStep ==
   \A w \in WorkIds :
-    CompleteWithResult(w) => TerminalAppendOnlyStep
+    EndWorkWithResult(w) => TerminalAppendOnlyStep
 PROOF
-  BY DEF CompleteWithResult, TerminalAppendOnlyStep
+  BY DEF EndWorkWithResult, TerminalAppendOnlyStep
 
-THEOREM CompleteWithNoResultSatisfiesTerminalAppendOnlyStep ==
+THEOREM EndWorkWithNoResultSatisfiesTerminalAppendOnlyStep ==
   \A w \in WorkIds :
-    CompleteWithNoResult(w) => TerminalAppendOnlyStep
+    EndWorkWithNoResult(w) => TerminalAppendOnlyStep
 PROOF
-  BY DEF CompleteWithNoResult, TerminalAppendOnlyStep
+  BY DEF EndWorkWithNoResult, TerminalAppendOnlyStep
+
+THEOREM EndWorkSatisfiesTerminalAppendOnlyStep ==
+  \A w \in WorkIds, terminalKind \in {"RESULT", "NO_RESULT"} :
+    EndWork(w, terminalKind) => TerminalAppendOnlyStep
+PROOF
+  BY EndWorkWithResultSatisfiesTerminalAppendOnlyStep,
+     EndWorkWithNoResultSatisfiesTerminalAppendOnlyStep
+     DEF EndWork
 
 THEOREM NextSatisfiesTerminalAppendOnlyStep ==
   Next => TerminalAppendOnlyStep
 PROOF
-  BY AcceptWorkSatisfiesTerminalAppendOnlyStep,
-     StartWorkSatisfiesTerminalAppendOnlyStep,
-     CompleteWithResultSatisfiesTerminalAppendOnlyStep,
-     CompleteWithNoResultSatisfiesTerminalAppendOnlyStep
+  BY StartWorkSatisfiesTerminalAppendOnlyStep,
+     EndWorkSatisfiesTerminalAppendOnlyStep
      DEF Next, RecognizedWorkerTransition
 
 THEOREM BoxNextSatisfiesBoxTerminalAppendOnlyStep ==

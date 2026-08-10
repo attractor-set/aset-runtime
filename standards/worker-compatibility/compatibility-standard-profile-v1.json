@@ -3,10 +3,10 @@
   "formal_release_gate": "REQUIRES_REPRODUCIBLE_FORMAL_RELEASE_GATE",
   "implementation_precedence": "NONE",
   "profile_id": "ASET-WORKER-COMPATIBILITY-STANDARD-V1",
-  "required_conformance_profile": "ASET-WORKER-CONFORMANCE-V1",
+  "required_conformance_profile": "ASET-WORKER-CONFORMANCE-V2",
   "requires_seed": "ASET-SEED-COMPATIBILITY-STANDARD@seed-0.3.0-alpha.3",
   "schema_version": 1,
   "series_id": "ASET-WORKER-COMPATIBILITY-STANDARD",
   "status": "FORMAL_ASSURANCE_MATERIALIZED_NOT_RELEASED",
-  "worker_canon": "ASET-WORKER-CANON-0.1-ALPHA1"
+  "worker_canon": "ASET-WORKER-CANON-0.1-ALPHA2"
 }

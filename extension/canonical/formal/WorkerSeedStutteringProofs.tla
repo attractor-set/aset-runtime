@@ -2,12 +2,9 @@
 EXTENDS WorkerSeedStuttering, TLAPS
 
 (***************************************************************************
-Mechanical proof candidate for the Worker -> Seed stuttering relation.
-
-The exact pinned SeedResolution.tla is loaded externally by the runner. This
-proof covers only Worker lifecycle actions and their Seed projection. It does
-not prove implementation refinement, wire-level digest correctness, liveness,
-result quality, effect execution, or Authority establishment mechanisms.
+Mechanical proof candidate for the minimized Worker -> Seed stuttering
+relation. The exact pinned SeedResolution.tla is loaded externally by the
+runner.
 ***************************************************************************)
 
 THEOREM ProjectionTupleMatchesSeedVars ==
@@ -20,37 +17,23 @@ THEOREM ProjectionOwnedTupleMatchesSeedOwnedVars ==
 PROOF
   BY DEF projectedSeedOwnedVars, Seed!seedVars
 
-THEOREM WorkerAcceptWorkPreservesSeedProjection ==
-  \A w \in WorkIds :
-    WorkerAcceptWork(w) => UNCHANGED projectedSeedVars
-PROOF
-  BY DEF WorkerAcceptWork
-
 THEOREM WorkerStartWorkPreservesSeedProjection ==
   \A w \in WorkIds :
     WorkerStartWork(w) => UNCHANGED projectedSeedVars
 PROOF
   BY DEF WorkerStartWork
 
-THEOREM WorkerCompleteWithResultPreservesSeedProjection ==
-  \A w \in WorkIds :
-    WorkerCompleteWithResult(w) => UNCHANGED projectedSeedVars
+THEOREM WorkerEndWorkPreservesSeedProjection ==
+  \A w \in WorkIds, terminalKind \in {"RESULT", "NO_RESULT"} :
+    WorkerEndWork(w, terminalKind) => UNCHANGED projectedSeedVars
 PROOF
-  BY DEF WorkerCompleteWithResult
-
-THEOREM WorkerCompleteWithNoResultPreservesSeedProjection ==
-  \A w \in WorkIds :
-    WorkerCompleteWithNoResult(w) => UNCHANGED projectedSeedVars
-PROOF
-  BY DEF WorkerCompleteWithNoResult
+  BY DEF WorkerEndWork
 
 THEOREM WorkerOperationsPreserveSeedProjection ==
   WorkerOnlyAction => UNCHANGED projectedSeedVars
 PROOF
-  BY WorkerAcceptWorkPreservesSeedProjection,
-     WorkerStartWorkPreservesSeedProjection,
-     WorkerCompleteWithResultPreservesSeedProjection,
-     WorkerCompleteWithNoResultPreservesSeedProjection
+  BY WorkerStartWorkPreservesSeedProjection,
+     WorkerEndWorkPreservesSeedProjection
      DEF WorkerOnlyAction
 
 THEOREM WorkerOperationsPreserveSeedOwnedState ==

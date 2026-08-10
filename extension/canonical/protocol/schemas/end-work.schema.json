@@ -2,10 +2,6 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
-    "accepted_work_digest": {
-      "pattern": "^sha256:[0-9a-f]{64}$",
-      "type": "string"
-    },
     "evidence_bindings": {
       "items": {
         "pattern": "^sha256:[0-9a-f]{64}$",
@@ -14,11 +10,21 @@
       "type": "array",
       "uniqueItems": true
     },
-    "no_result_binding": {
+    "terminal_binding": {
       "pattern": "^sha256:[0-9a-f]{64}$",
       "type": "string"
     },
+    "terminal_kind": {
+      "enum": [
+        "RESULT",
+        "NO_RESULT"
+      ]
+    },
     "terminal_record_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "work_binding_digest": {
       "pattern": "^sha256:[0-9a-f]{64}$",
       "type": "string"
     },
@@ -29,10 +35,10 @@
   },
   "required": [
     "work_id",
-    "accepted_work_digest",
+    "work_binding_digest",
+    "terminal_kind",
     "terminal_record_digest",
-    "no_result_binding",
-    "evidence_bindings"
+    "terminal_binding"
   ],
   "type": "object"
 }

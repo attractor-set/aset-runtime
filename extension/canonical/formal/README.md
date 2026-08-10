@@ -1,39 +1,15 @@
-# ASET Worker formal assurance surface
+# Worker formal assurance
 
-`WorkerLifecycle.tla` is the handwritten abstract safety model for the Worker
-lifecycle:
+The minimized lifecycle projected here is:
 
 ```text
-UNREGISTERED -> ACCEPTED -> RUNNING -> (RESULT XOR NO_RESULT)
+UNREGISTERED -> RUNNING -> (RESULT XOR NO_RESULT)
 ```
 
-`NO_RESULT` is an explicit terminal state. Missing terminal state while a work
-identity is `RUNNING` does not imply `NO_RESULT`.
+with the two normative operations `START_WORK` and `END_WORK`. The TLA+ state is intentionally smaller than the wire/profile surface: it tracks only append-only started and terminal-kind facts.
 
-The formal model deliberately abstracts wire-level digests and metadata. The
-normative source remains `extension/canonical/source/worker-model.json` together
-with the exact files listed by `CANON_PACKAGE.json`. Formal artifacts are
-assurance projections and have no normative implementation precedence.
+The machine-readable canon remains normative. `WorkerCanonProjection.tla` is deterministically generated from it; `WorkerLifecycle.tla` is the handwritten assurance model; `WorkerCanonRefinementProofs.tla` is the behavioral-equivalence proof candidate.
 
-The formal candidate contains three independent proof surfaces:
+`WorkerSeedStuttering.tla` composes the Worker-only lifecycle with the exact externally pinned Seed model and treats every Worker operation as a Seed stutter.
 
-1. `WorkerLifecycleProofs.tla` — unbounded TLAPS safety over the handwritten
-   lifecycle model;
-2. `WorkerCanonProjection.tla` + `WorkerCanonRefinementProofs.tla` — standalone
-   deterministic projection from the machine-readable canon plus behavioral
-   equivalence to the handwritten lifecycle model;
-3. `WorkerSeedStuttering.tla` + `WorkerSeedStutteringProofs.tla` — exact pinned
-   Seed bridge proving that Worker-only lifecycle operations stutter with
-   respect to the Seed projection.
-
-`SeedResolution.tla` is not copied into this repository. The Seed-refinement
-runner loads it from a separately supplied checkout and verifies the exact
-pinned SHA-256 before TLAPS is invoked.
-
-Until the candidate proof gate is run successfully with the pinned TLAPM build,
-`CANON_TO_TLA`, `TLAPS_SAFETY`, and `SEED_REFINEMENT` remain `OPEN` and the
-formal release gate remains blocked.
-
-Excluded claims include implementation refinement, cryptographic digest
-correctness, liveness, result correctness, worker eligibility, external effect
-execution, and concrete Authority establishment.
+Formal assurance for this semantic revision is OPEN until the exact new proof artifacts are run and materialized. Previous proof evidence for the pre-minimization `ACCEPTED` lifecycle must not be reused.

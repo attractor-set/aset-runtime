@@ -1,23 +1,25 @@
 # ASET Worker Extension
 
-Это semantic bootstrap границы продуктивной работы ASET.
+Это минимальная semantic boundary продуктивной попытки ASET.
 
-Минимальная машина работы:
+Базовый Worker теперь знает только два перехода:
 
 ```text
-UNREGISTERED -> ACCEPTED -> RUNNING -> (RESULT XOR NO_RESULT)
+UNREGISTERED --START_WORK--> RUNNING --END_WORK(RESULT|NO_RESULT)--> terminal
 ```
 
-`NO_RESULT` — положительно зафиксированный терминальный исход, а не отсутствие записи. Пока работа находится в `RUNNING`, отсутствие результата означает только то, что терминальный исход ещё не зарегистрирован.
+Каноническое состояние append-only: сначала появляется exact immutable started-work binding, затем при завершении — один exact immutable terminal record. `RUNNING`, `RESULT` и `NO_RESULT` являются проекциями этих фактов.
 
-`RESULT` не означает «успех», а `NO_RESULT` не означает «провал». Семантика Worker отвечает только на вопрос, был ли произведён exact result material для exact work invocation.
+`NO_RESULT` — явно зафиксированный терминальный исход, а не отсутствие записи. `RESULT` не означает успех, а `NO_RESULT` не означает провал.
 
-Worker, его вычислительная/когнитивная/материальная способность, результат и evidence сами по себе не создают Authority, Seed Resolution, признанное изменение Context или разрешение на внешний эффект.
+Assignment, acceptance, очередь, scheduling, retry provenance, внутреннее устройство work descriptor, verification policy и качество результата находятся вне Worker canon и могут определяться профилями.
+
+Worker, его способность, исполнение, результат и evidence сами по себе не создают Authority, Seed Resolution, признанное изменение Context или разрешение на внешний эффект.
+
+Текущая semantic revision: `0.1.0-alpha.1` / `ASET-WORKER-CANON-0.1-ALPHA2`. После минимизации предыдущие materialized proofs намеренно не переносятся: formal closure должен быть выполнен заново для новой модели.
 
 Локальная bootstrap-проверка:
 
 ```bash
 python tools/run_local_gate.py
 ```
-
-Canon-to-TLA equivalence и механически доказанное Seed refinement пока намеренно остаются открытыми release gates.

@@ -8,20 +8,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 MODEL = ROOT / "extension/canonical/source/worker-model.json"
 OUTPUT = ROOT / "extension/canonical/formal/WorkerCanonProjection.tla"
-PROFILE = "ASET-WORKER-CANON-TLA-PROJECTION-V1"
+PROFILE = "ASET-WORKER-CANON-TLA-PROJECTION-V2"
 
 EXPECTED_TRANSITIONS = [
-    ("UNREGISTERED", "ACCEPT_WORK", "ACCEPTED"),
-    ("ACCEPTED", "START_WORK", "RUNNING"),
-    ("RUNNING", "COMPLETE_WITH_RESULT", "RESULT"),
-    ("RUNNING", "COMPLETE_WITH_NO_RESULT", "NO_RESULT"),
+    ("UNREGISTERED", "START_WORK", None, "RUNNING"),
+    ("RUNNING", "END_WORK", "RESULT", "RESULT"),
+    ("RUNNING", "END_WORK", "NO_RESULT", "NO_RESULT"),
 ]
-EXPECTED_OPERATIONS = [
-    "ACCEPT_WORK",
-    "START_WORK",
-    "COMPLETE_WITH_RESULT",
-    "COMPLETE_WITH_NO_RESULT",
-]
+EXPECTED_OPERATIONS = ["START_WORK", "END_WORK"]
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -30,16 +24,16 @@ def sha256_bytes(data: bytes) -> str:
 
 def validate(model: dict) -> None:
     errors: list[str] = []
-    if model.get("canon_id") != "ASET-WORKER-CANON-0.1-ALPHA1":
+    if model.get("canon_id") != "ASET-WORKER-CANON-0.1-ALPHA2":
         errors.append("unexpected canon_id")
-    if model.get("version") != "0.1.0-alpha.0":
+    if model.get("version") != "0.1.0-alpha.1":
         errors.append("unexpected version")
     if model.get("state_machine", {}).get("terminal_states") != ["RESULT", "NO_RESULT"]:
         errors.append("terminal states mismatch")
     if model.get("state_machine", {}).get("terminal_relation") != "XOR":
         errors.append("terminal relation is not XOR")
     transitions = [
-        (x.get("from"), x.get("operation"), x.get("to"))
+        (x.get("from"), x.get("operation"), x.get("terminal_kind"), x.get("to"))
         for x in model.get("state_machine", {}).get("transitions", [])
     ]
     if transitions != EXPECTED_TRANSITIONS:
@@ -47,9 +41,9 @@ def validate(model: dict) -> None:
     operations = [x.get("kind") for x in model.get("operations", [])]
     if operations != EXPECTED_OPERATIONS:
         errors.append("operation catalogue mismatch")
-    if len(model.get("requirements", [])) != 11:
+    if len(model.get("requirements", [])) != 9:
         errors.append("requirement count mismatch")
-    if len(model.get("invariants", [])) != 11:
+    if len(model.get("invariants", [])) != 9:
         errors.append("invariant count mismatch")
     if errors:
         raise ValueError("; ".join(errors))
@@ -66,79 +60,68 @@ Source: extension/canonical/source/worker-model.json
 Source SHA-256: {source_sha}
 Projection profile: {PROFILE}
 
-This is a standalone safety projection generated from the exact machine-
-readable Worker canon. It does not EXTEND or instantiate WorkerLifecycle.
-WorkerCanonRefinementProofs.tla explicitly instantiates this generated module
-onto the handwritten assurance state.
-
-Wire-level digest construction, exact metadata payloads, runtime execution,
-liveness, result correctness and implementation refinement remain outside this
-projection. The deterministic generator is part of the assurance trusted
-computing base.
+This standalone safety projection captures only the minimized append-only
+productive-attempt lifecycle declared by the machine-readable Worker canon.
+It does not interpret the opaque work descriptor, terminal payload, wire-level
+digests, runtime execution, liveness, result correctness or implementation
+refinement.
 ***************************************************************************)
 
 CONSTANT WorkIds
 
-VARIABLES accepted, started, resultWorks, noResultWorks
+VARIABLES started, resultWorks, noResultWorks
 
-CanonVars == <<accepted, started, resultWorks, noResultWorks>>
+CanonVars == <<started, resultWorks, noResultWorks>>
 
 CanonInit ==
-    /\\ accepted = {{}}
     /\\ started = {{}}
     /\\ resultWorks = {{}}
     /\\ noResultWorks = {{}}
 
 CanonTerminal == resultWorks \\cup noResultWorks
 
-CanonAcceptWork(w) ==
-    /\\ w \\in WorkIds
-    /\\ w \\notin accepted
-    /\\ accepted' = accepted \\cup {{w}}
-    /\\ UNCHANGED <<started, resultWorks, noResultWorks>>
-
 CanonStartWork(w) ==
-    /\\ w \\in accepted
+    /\\ w \\in WorkIds
     /\\ w \\notin started
-    /\\ w \\notin CanonTerminal
     /\\ started' = started \\cup {{w}}
-    /\\ UNCHANGED <<accepted, resultWorks, noResultWorks>>
+    /\\ UNCHANGED <<resultWorks, noResultWorks>>
 
-CanonCompleteWithResult(w) ==
+CanonEndWorkWithResult(w) ==
     /\\ w \\in started
     /\\ w \\notin CanonTerminal
     /\\ resultWorks' = resultWorks \\cup {{w}}
-    /\\ UNCHANGED <<accepted, started, noResultWorks>>
+    /\\ UNCHANGED <<started, noResultWorks>>
 
-CanonCompleteWithNoResult(w) ==
+CanonEndWorkWithNoResult(w) ==
     /\\ w \\in started
     /\\ w \\notin CanonTerminal
     /\\ noResultWorks' = noResultWorks \\cup {{w}}
-    /\\ UNCHANGED <<accepted, started, resultWorks>>
+    /\\ UNCHANGED <<started, resultWorks>>
+
+CanonEndWork(w, terminalKind) ==
+    \\/ /\\ terminalKind = "RESULT"
+       /\\ CanonEndWorkWithResult(w)
+    \\/ /\\ terminalKind = "NO_RESULT"
+       /\\ CanonEndWorkWithNoResult(w)
 
 CanonRecognizedWorkerTransition ==
-    \\/ \\E w \\in WorkIds : CanonAcceptWork(w)
     \\/ \\E w \\in WorkIds : CanonStartWork(w)
-    \\/ \\E w \\in WorkIds : CanonCompleteWithResult(w)
-    \\/ \\E w \\in WorkIds : CanonCompleteWithNoResult(w)
+    \\/ \\E w \\in WorkIds, terminalKind \\in {{"RESULT", "NO_RESULT"}} : CanonEndWork(w, terminalKind)
 
 CanonNext == CanonRecognizedWorkerTransition
 CanonSpec == CanonInit /\\ [][CanonNext]_CanonVars
 
 CanonTypeOK ==
-    /\\ accepted \\subseteq WorkIds
     /\\ started \\subseteq WorkIds
     /\\ resultWorks \\subseteq WorkIds
     /\\ noResultWorks \\subseteq WorkIds
 
-CanonStartedImpliesAccepted == started \\subseteq accepted
 CanonResultImpliesStarted == resultWorks \\subseteq started
 CanonNoResultImpliesStarted == noResultWorks \\subseteq started
 CanonResultXorNoResult == resultWorks \\cap noResultWorks = {{}}
 
 CanonWorkerSafety ==
     /\\ CanonTypeOK
-    /\\ CanonStartedImpliesAccepted
     /\\ CanonResultImpliesStarted
     /\\ CanonNoResultImpliesStarted
     /\\ CanonResultXorNoResult

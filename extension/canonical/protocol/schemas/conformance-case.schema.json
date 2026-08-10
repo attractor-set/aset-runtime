@@ -9,9 +9,6 @@
     "expected": {
       "additionalProperties": false,
       "properties": {
-        "accepted": {
-          "type": "boolean"
-        },
         "authority_created": {
           "type": "boolean"
         },
@@ -19,6 +16,9 @@
           "type": "string"
         },
         "effect_permitted": {
+          "type": "boolean"
+        },
+        "recognized": {
           "type": "boolean"
         },
         "seed_resolution_created": {
@@ -30,16 +30,14 @@
         "work_state": {
           "enum": [
             "UNREGISTERED",
-            "ACCEPTED",
             "RUNNING",
             "RESULT",
-            "NO_RESULT",
-            "MULTIPLE"
+            "NO_RESULT"
           ]
         }
       },
       "required": [
-        "accepted",
+        "recognized",
         "code",
         "state_changed",
         "work_state",

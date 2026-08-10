@@ -4,82 +4,71 @@ EXTENDS FiniteSets
 (***************************************************************************
 GENERATED FILE. DO NOT EDIT.
 Source: extension/canonical/source/worker-model.json
-Source SHA-256: a5d5c842cace0a0a3ad0b43ce913117f55eea403a542d5b8c8faf33fde8d2e77
-Projection profile: ASET-WORKER-CANON-TLA-PROJECTION-V1
+Source SHA-256: e7769e1ea41fce4ebf05f66adb03f6c048f3040ec215011c8d070b62a32b8ff0
+Projection profile: ASET-WORKER-CANON-TLA-PROJECTION-V2
 
-This is a standalone safety projection generated from the exact machine-
-readable Worker canon. It does not EXTEND or instantiate WorkerLifecycle.
-WorkerCanonRefinementProofs.tla explicitly instantiates this generated module
-onto the handwritten assurance state.
-
-Wire-level digest construction, exact metadata payloads, runtime execution,
-liveness, result correctness and implementation refinement remain outside this
-projection. The deterministic generator is part of the assurance trusted
-computing base.
+This standalone safety projection captures only the minimized append-only
+productive-attempt lifecycle declared by the machine-readable Worker canon.
+It does not interpret the opaque work descriptor, terminal payload, wire-level
+digests, runtime execution, liveness, result correctness or implementation
+refinement.
 ***************************************************************************)
 
 CONSTANT WorkIds
 
-VARIABLES accepted, started, resultWorks, noResultWorks
+VARIABLES started, resultWorks, noResultWorks
 
-CanonVars == <<accepted, started, resultWorks, noResultWorks>>
+CanonVars == <<started, resultWorks, noResultWorks>>
 
 CanonInit ==
-    /\ accepted = {}
     /\ started = {}
     /\ resultWorks = {}
     /\ noResultWorks = {}
 
 CanonTerminal == resultWorks \cup noResultWorks
 
-CanonAcceptWork(w) ==
-    /\ w \in WorkIds
-    /\ w \notin accepted
-    /\ accepted' = accepted \cup {w}
-    /\ UNCHANGED <<started, resultWorks, noResultWorks>>
-
 CanonStartWork(w) ==
-    /\ w \in accepted
+    /\ w \in WorkIds
     /\ w \notin started
-    /\ w \notin CanonTerminal
     /\ started' = started \cup {w}
-    /\ UNCHANGED <<accepted, resultWorks, noResultWorks>>
+    /\ UNCHANGED <<resultWorks, noResultWorks>>
 
-CanonCompleteWithResult(w) ==
+CanonEndWorkWithResult(w) ==
     /\ w \in started
     /\ w \notin CanonTerminal
     /\ resultWorks' = resultWorks \cup {w}
-    /\ UNCHANGED <<accepted, started, noResultWorks>>
+    /\ UNCHANGED <<started, noResultWorks>>
 
-CanonCompleteWithNoResult(w) ==
+CanonEndWorkWithNoResult(w) ==
     /\ w \in started
     /\ w \notin CanonTerminal
     /\ noResultWorks' = noResultWorks \cup {w}
-    /\ UNCHANGED <<accepted, started, resultWorks>>
+    /\ UNCHANGED <<started, resultWorks>>
+
+CanonEndWork(w, terminalKind) ==
+    \/ /\ terminalKind = "RESULT"
+       /\ CanonEndWorkWithResult(w)
+    \/ /\ terminalKind = "NO_RESULT"
+       /\ CanonEndWorkWithNoResult(w)
 
 CanonRecognizedWorkerTransition ==
-    \/ \E w \in WorkIds : CanonAcceptWork(w)
     \/ \E w \in WorkIds : CanonStartWork(w)
-    \/ \E w \in WorkIds : CanonCompleteWithResult(w)
-    \/ \E w \in WorkIds : CanonCompleteWithNoResult(w)
+    \/ \E w \in WorkIds, terminalKind \in {"RESULT", "NO_RESULT"} : CanonEndWork(w, terminalKind)
 
 CanonNext == CanonRecognizedWorkerTransition
 CanonSpec == CanonInit /\ [][CanonNext]_CanonVars
 
 CanonTypeOK ==
-    /\ accepted \subseteq WorkIds
     /\ started \subseteq WorkIds
     /\ resultWorks \subseteq WorkIds
     /\ noResultWorks \subseteq WorkIds
 
-CanonStartedImpliesAccepted == started \subseteq accepted
 CanonResultImpliesStarted == resultWorks \subseteq started
 CanonNoResultImpliesStarted == noResultWorks \subseteq started
 CanonResultXorNoResult == resultWorks \cap noResultWorks = {}
 
 CanonWorkerSafety ==
     /\ CanonTypeOK
-    /\ CanonStartedImpliesAccepted
     /\ CanonResultImpliesStarted
     /\ CanonNoResultImpliesStarted
     /\ CanonResultXorNoResult

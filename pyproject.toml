@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aset-worker-extension-bootstrap"
-version = "0.1.0a0"
-description = "Semantic bootstrap for ASET Worker Extension"
+version = "0.1.0a1"
+description = "Minimal productive-attempt semantic bootstrap for ASET Worker Extension"
 requires-python = ">=3.11"
 license = {text = "Apache-2.0"}
 
