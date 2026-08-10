@@ -2,18 +2,28 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
-    "accepted_work_digest": {
+    "work_binding_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "work_descriptor_binding": {
       "pattern": "^sha256:[0-9a-f]{64}$",
       "type": "string"
     },
     "work_id": {
       "minLength": 1,
       "type": "string"
+    },
+    "worker_binding": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
     }
   },
   "required": [
     "work_id",
-    "accepted_work_digest"
+    "work_binding_digest",
+    "worker_binding",
+    "work_descriptor_binding"
   ],
   "type": "object"
 }

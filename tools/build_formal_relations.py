@@ -39,11 +39,8 @@ def main() -> int:
         "status": "PROOF_CANDIDATE_MATERIALIZED",
         "normative_precedence": "MACHINE_READABLE_CANON",
         "relation_type": "STANDALONE_GENERATED_PROJECTION_WITH_BEHAVIORAL_EQUIVALENCE_PROOF_CANDIDATE",
-        "profile": "ASET-WORKER-CANON-TLA-PROJECTION-V1",
-        "source_model": {
-            "path": "extension/canonical/source/worker-model.json",
-            "sha256": sha(MODEL),
-        },
+        "profile": "ASET-WORKER-CANON-TLA-PROJECTION-V2",
+        "source_model": {"path": "extension/canonical/source/worker-model.json", "sha256": sha(MODEL)},
         "generated_projection": {
             "module": "WorkerCanonProjection",
             "path": "extension/canonical/formal/WorkerCanonProjection.tla",
@@ -65,11 +62,11 @@ def main() -> int:
                 "WorkerLifecycleBehaviorallyEquivalentToCanonProjection",
             ],
         },
-        "scope": "DECLARED_LIFECYCLE_SAFETY_PROJECTION",
+        "scope": "MINIMIZED_PRODUCTIVE_ATTEMPT_LIFECYCLE_SAFETY_PROJECTION",
         "excluded_claims": [
+            "work-descriptor interpretation",
             "wire-schema equivalence",
             "digest construction correctness",
-            "exact metadata-payload equivalence",
             "runtime execution correctness",
             "liveness",
             "result correctness",
@@ -109,7 +106,7 @@ def main() -> int:
                 "WorkerCompositionRefinesSeedResolutionByStuttering",
             ],
         },
-        "claim_boundary": "Worker lifecycle operations alter only Worker extension state and are stuttering steps with respect to the exact pinned Seed projection.",
+        "claim_boundary": "START_WORK and END_WORK alter only Worker extension state and are stuttering steps with respect to the exact pinned Seed projection.",
         "excluded_claims": [
             "Worker output is a Seed request",
             "Worker output is a Seed resolution",
@@ -134,13 +131,13 @@ def main() -> int:
             "sha256": sha(FORMAL / "WorkerLifecycleProofs.tla"),
             "final_theorems": [
                 "SpecImpliesAlwaysWorkerSafety",
-                "SpecImpliesAcceptedAppendOnly",
                 "SpecImpliesStartedAppendOnly",
                 "SpecImpliesTerminalAppendOnly",
                 "SpecImpliesWorkerStateChangesOnlyByRecognizedTransition",
             ],
         },
         "excluded_claims": [
+            "work-descriptor interpretation",
             "wire metadata correctness",
             "digest correctness",
             "liveness",

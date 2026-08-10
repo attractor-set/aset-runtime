@@ -1,5 +1,5 @@
 {
-  "claim_boundary": "Worker lifecycle operations alter only Worker extension state and are stuttering steps with respect to the exact pinned Seed projection.",
+  "claim_boundary": "START_WORK and END_WORK alter only Worker extension state and are stuttering steps with respect to the exact pinned Seed projection.",
   "document_type": "aset-worker-seed-refinement-relation",
   "excluded_claims": [
     "Worker output is a Seed request",
@@ -12,7 +12,7 @@
   "mapping_candidate": {
     "module": "WorkerSeedStuttering",
     "path": "extension/canonical/formal/WorkerSeedStuttering.tla",
-    "sha256": "sha256:bf2144e02e66c375be49d9e31e7a942f2f1c33683198891251d640d979e06f59",
+    "sha256": "sha256:a0b91fb37442b031ab31960f72b072644116f31f9d8797b756c5c183d72f2b5e",
     "worker_operations": "SEED_STUTTER"
   },
   "proof_candidate": {
@@ -23,10 +23,10 @@
     ],
     "module": "WorkerSeedStutteringProofs",
     "path": "extension/canonical/formal/WorkerSeedStutteringProofs.tla",
-    "sha256": "sha256:df0f617892b66331d3b98729d6b48f4b4be76e08295ffe865a0a8dd08c1504ad"
+    "sha256": "sha256:8f5f8a5c3ba55436511ea792e69ec6fbd2131e1a767c31339c253f6751aab19f"
   },
   "proof_evidence": {
-    "obligations_proved": 23,
+    "obligations_proved": 19,
     "path": "extension/canonical/assurance/seed-refinement-proof.json",
     "status": "MECHANICALLY_PROVED"
   },

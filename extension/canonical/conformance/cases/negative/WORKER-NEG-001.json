@@ -1,10 +1,10 @@
 {
   "case_id": "WORKER-NEG-001",
   "expected": {
-    "accepted": false,
     "authority_created": false,
-    "code": "WORK_NOT_ACCEPTED",
+    "code": "WORK_NOT_STARTED",
     "effect_permitted": false,
+    "recognized": false,
     "seed_resolution_created": false,
     "state_changed": false,
     "work_state": "UNREGISTERED"
@@ -12,9 +12,15 @@
   "polarity": "negative",
   "steps": [
     {
-      "kind": "START_WORK",
+      "kind": "END_WORK",
       "payload": {
-        "accepted_work_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "evidence_bindings": [
+          "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+        ],
+        "terminal_binding": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+        "terminal_kind": "RESULT",
+        "terminal_record_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "work_binding_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
         "work_id": "work:1"
       }
     }

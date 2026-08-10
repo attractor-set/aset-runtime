@@ -3,12 +3,12 @@
     "mapping": {
       "module": "WorkerSeedStuttering",
       "path": "extension/canonical/formal/WorkerSeedStuttering.tla",
-      "sha256": "sha256:bf2144e02e66c375be49d9e31e7a942f2f1c33683198891251d640d979e06f59"
+      "sha256": "sha256:a0b91fb37442b031ab31960f72b072644116f31f9d8797b756c5c183d72f2b5e"
     },
     "proof": {
       "module": "WorkerSeedStutteringProofs",
       "path": "extension/canonical/formal/WorkerSeedStutteringProofs.tla",
-      "sha256": "sha256:df0f617892b66331d3b98729d6b48f4b4be76e08295ffe865a0a8dd08c1504ad"
+      "sha256": "sha256:8f5f8a5c3ba55436511ea792e69ec6fbd2131e1a767c31339c253f6751aab19f"
     }
   },
   "claim_boundary": [
@@ -24,7 +24,7 @@
       "WorkerCompositionRefinesSeedResolutionByStuttering"
     ],
     "obligation_count_semantics": "RECORDED_EVIDENCE_NOT_FIXED_SEMANTIC_CONTRACT",
-    "obligations_proved": 23,
+    "obligations_proved": 19,
     "runner": "tools/run_formal_candidate_gate.py",
     "verdict": "PASS"
   },

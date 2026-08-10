@@ -6,7 +6,7 @@
     {
       "evidence": "extension/canonical/assurance/lifecycle-proof.json",
       "id": "WORKER_TLAPS_SAFETY",
-      "obligations_proved": 66,
+      "obligations_proved": 52,
       "status": "MECHANICALLY_PROVED"
     },
     {
@@ -18,7 +18,7 @@
     {
       "evidence": "extension/canonical/assurance/seed-refinement-proof.json",
       "id": "WORKER_SEED_REFINEMENT",
-      "obligations_proved": 23,
+      "obligations_proved": 19,
       "status": "MECHANICALLY_PROVED"
     }
   ],

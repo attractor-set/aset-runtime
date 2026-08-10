@@ -27,7 +27,6 @@ PROOFS = {
         "proof": FORMAL / "WorkerLifecycleProofs.tla",
         "final_theorems": [
             "SpecImpliesAlwaysWorkerSafety",
-            "SpecImpliesAcceptedAppendOnly",
             "SpecImpliesStartedAppendOnly",
             "SpecImpliesTerminalAppendOnly",
             "SpecImpliesWorkerStateChangesOnlyByRecognizedTransition",
@@ -178,7 +177,7 @@ def build_evidence(reports: dict[str, dict]) -> dict[str, dict]:
         "status": "MECHANICALLY_PROVED",
         "scope": "EXACT_CANON_PROJECTION_TO_HANDWRITTEN_LIFECYCLE_EQUIVALENCE",
         "normative_precedence": "MACHINE_READABLE_CANON",
-        "profile": "ASET-WORKER-CANON-TLA-PROJECTION-V1",
+        "profile": "ASET-WORKER-CANON-TLA-PROJECTION-V2",
         "artifacts": {
             "source_model": {
                 "path": "extension/canonical/source/worker-model.json",
@@ -338,7 +337,7 @@ def expected_relation_metadata(evidence: dict[str, dict]) -> dict[str, dict]:
 
 
 def build_repository_status_metadata() -> dict[str, dict]:
-   IBILITY_PROFILE)
+    profile = read_json(COMPATIBILITY_PROFILE)
     profile["formal_release_gate"] = "REQUIRES_REPRODUCIBLE_FORMAL_RELEASE_GATE"
     profile["status"] = "FORMAL_ASSURANCE_MATERIALIZED_NOT_RELEASED"
     return {

@@ -1,10 +1,10 @@
 {
-  "case_count": 15,
+  "case_count": 12,
   "document_type": "aset-worker-conformance-profile",
-  "negative_cases": 9,
+  "negative_cases": 7,
   "oracle": "reference/oracle.py",
-  "positive_cases": 6,
-  "profile_id": "ASET-WORKER-CONFORMANCE-V1",
+  "positive_cases": 5,
+  "profile_id": "ASET-WORKER-CONFORMANCE-V2",
   "schema_version": 1,
   "status": "BOOTSTRAP"
 }

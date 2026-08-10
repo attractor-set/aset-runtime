@@ -2,7 +2,7 @@ from __future__ import annotations
 from copy import deepcopy
 
 BASE = {
-    "accepted": False,
+    "recognized": False,
     "code": "UNSET",
     "state_changed": False,
     "work_state": "UNREGISTERED",
@@ -18,20 +18,17 @@ def _result(**changes):
     return out
 
 
-def state_of(work_id, accepted, started, terminal):
-    if work_id not in accepted:
-        return "UNREGISTERED"
+def state_of(work_id, started, terminal):
     t = terminal.get(work_id)
     if t is not None:
-        return t["kind"]
+        return t["terminal_kind"]
     if work_id in started:
         return "RUNNING"
-    return "ACCEPTED"
+    return "UNREGISTERED"
 
 
 def run_case(case):
-    accepted = {}
-    started = set()
+    started = {}
     terminal = {}
     last = None
 
@@ -40,80 +37,88 @@ def run_case(case):
         p = step["payload"]
         wid = p.get("work_id", "")
 
-        if kind == "ACCEPT_WORK":
+        if kind == "START_WORK":
             required = [
-                p.get("work_id"), p.get("accepted_work_digest"), p.get("worker_binding"),
-                p.get("context_binding"), p.get("work_spec_binding"), p.get("execution_constraints_binding")
+                p.get("work_id"),
+                p.get("work_binding_digest"),
+                p.get("worker_binding"),
+                p.get("work_descriptor_binding"),
             ]
             if not all(required):
                 last = _result(code="WORK_BINDING_REQUIRED")
                 continue
-            previous = accepted.get(wid)
+            previous = started.get(wid)
             if previous is None:
-                # retry linkage, when declared, must point to an existing terminal record
-                pred = p.get("predecessor_terminal_binding")
-                if pred is not None:
-                    if not any(t["terminal_record_digest"] == pred for t in terminal.values()):
-                        last = _result(code="PREDECESSOR_TERMINAL_NOT_FOUND")
-                        continue
-                accepted[wid] = deepcopy(p)
-                last = _result(accepted=True, code="WORK_ACCEPTED", state_changed=True, work_state="ACCEPTED")
+                started[wid] = deepcopy(p)
+                last = _result(
+                    recognized=True,
+                    code="WORK_STARTED",
+                    state_changed=True,
+                    work_state="RUNNING",
+                )
             elif previous == p:
-                last = _result(accepted=True, code="IDEMPOTENT_REPLAY", work_state=state_of(wid, accepted, started, terminal))
+                last = _result(
+                    recognized=True,
+                    code="IDEMPOTENT_REPLAY",
+                    work_state=state_of(wid, started, terminal),
+                )
             else:
-                last = _result(code="WORK_IDENTITY_CONFLICT", work_state=state_of(wid, accepted, started, terminal))
+                last = _result(
+                    code="WORK_IDENTITY_CONFLICT",
+                    work_state=state_of(wid, started, terminal),
+                )
 
-        elif kind == "START_WORK":
-            a = accepted.get(wid)
-            if a is None:
-                last = _result(code="WORK_NOT_ACCEPTED")
-            elif p.get("accepted_work_digest") != a.get("accepted_work_digest"):
-                last = _result(code="ACCEPTED_WORK_BINDING_MISMATCH", work_state=state_of(wid, accepted, started, terminal))
-            elif wid in terminal:
-                last = _result(code="TERMINAL_WORK_IMMUTABLE", work_state=state_of(wid, accepted, started, terminal))
-            elif wid in started:
-                last = _result(code="WORK_ALREADY_RUNNING", work_state="RUNNING")
-            else:
-                started.add(wid)
-                last = _result(accepted=True, code="WORK_STARTED", state_changed=True, work_state="RUNNING")
-
-        elif kind in {"COMPLETE_WITH_RESULT", "COMPLETE_WITH_NO_RESULT"}:
-            a = accepted.get(wid)
-            if a is None:
-                last = _result(code="WORK_NOT_ACCEPTED")
+        elif kind == "END_WORK":
+            work = started.get(wid)
+            if work is None:
+                last = _result(code="WORK_NOT_STARTED")
                 continue
-            if p.get("accepted_work_digest") != a.get("accepted_work_digest"):
-                last = _result(code="ACCEPTED_WORK_BINDING_MISMATCH", work_state=state_of(wid, accepted, started, terminal))
+            if p.get("work_binding_digest") != work.get("work_binding_digest"):
+                last = _result(code="WORK_BINDING_MISMATCH", work_state=state_of(wid, started, terminal))
                 continue
-            if wid not in started:
-                last = _result(code="WORK_NOT_RUNNING", work_state="ACCEPTED")
+            terminal_kind = p.get("terminal_kind")
+            if terminal_kind not in {"RESULT", "NO_RESULT"}:
+                last = _result(code="TERMINAL_KIND_REQUIRED", work_state="RUNNING")
                 continue
-            if wid in terminal:
-                last = _result(code="TERMINAL_WORK_IMMUTABLE", work_state=state_of(wid, accepted, started, terminal))
-                continue
-            td = p.get("terminal_record_digest")
-            if not td:
+            if not p.get("terminal_record_digest") or not p.get("terminal_binding"):
                 last = _result(code="TERMINAL_BINDING_REQUIRED", work_state="RUNNING")
                 continue
-            if kind == "COMPLETE_WITH_RESULT":
-                if not p.get("result_binding"):
-                    last = _result(code="RESULT_BINDING_REQUIRED", work_state="RUNNING")
-                    continue
-                terminal[wid] = {"kind":"RESULT", **deepcopy(p)}
-                last = _result(accepted=True, code="WORK_COMPLETED_WITH_RESULT", state_changed=True, work_state="RESULT")
-            else:
-                if not p.get("no_result_binding"):
-                    last = _result(code="NO_RESULT_BINDING_REQUIRED", work_state="RUNNING")
-                    continue
-                if p.get("result_binding") is not None:
-                    last = _result(code="NO_RESULT_CANNOT_CARRY_RESULT", work_state="RUNNING")
-                    continue
-                terminal[wid] = {"kind":"NO_RESULT", **deepcopy(p)}
-                last = _result(accepted=True, code="WORK_COMPLETED_WITH_NO_RESULT", state_changed=True, work_state="NO_RESULT")
+            previous = terminal.get(wid)
+            if previous is not None:
+                if previous == p:
+                    last = _result(
+                        recognized=True,
+                        code="IDEMPOTENT_REPLAY",
+                        work_state=previous["terminal_kind"],
+                    )
+                else:
+                    last = _result(
+                        code="TERMINAL_WORK_IMMUTABLE",
+                        work_state=previous["terminal_kind"],
+                    )
+                continue
+            terminal[wid] = deepcopy(p)
+            code = (
+                "WORK_ENDED_WITH_RESULT"
+                if terminal_kind == "RESULT"
+                else "WORK_ENDED_WITH_NO_RESULT"
+            )
+            last = _result(
+                recognized=True,
+                code=code,
+                state_changed=True,
+                work_state=terminal_kind,
+            )
 
         elif kind == "ASSERT_WORKER_AUTHORITY":
-            last = _result(code="WORKER_AUTHORITY_FORBIDDEN", work_state=state_of(wid, accepted, started, terminal))
+            last = _result(
+                code="WORKER_AUTHORITY_FORBIDDEN",
+                work_state=state_of(wid, started, terminal),
+            )
         else:
-            last = _result(code="UNKNOWN_OPERATION", work_state=state_of(wid, accepted, started, terminal))
+            last = _result(
+                code="UNKNOWN_OPERATION",
+                work_state=state_of(wid, started, terminal),
+            )
 
     return deepcopy(last)

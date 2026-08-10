@@ -1,10 +1,10 @@
 {
   "case_id": "WORKER-NEG-007",
   "expected": {
-    "accepted": false,
     "authority_created": false,
-    "code": "NO_RESULT_BINDING_REQUIRED",
+    "code": "WORKER_AUTHORITY_FORBIDDEN",
     "effect_permitted": false,
+    "recognized": false,
     "seed_resolution_created": false,
     "state_changed": false,
     "work_state": "RUNNING"
@@ -12,36 +12,17 @@
   "polarity": "negative",
   "steps": [
     {
-      "kind": "ACCEPT_WORK",
+      "kind": "START_WORK",
       "payload": {
-        "accepted_work_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-        "context_binding": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
-        "execution_constraints_binding": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
-        "input_bindings": [
-          "sha256:5555555555555555555555555555555555555555555555555555555555555555"
-        ],
-        "predecessor_terminal_binding": null,
+        "work_binding_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "work_descriptor_binding": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
         "work_id": "work:1",
-        "work_spec_binding": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
         "worker_binding": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
       }
     },
     {
-      "kind": "START_WORK",
+      "kind": "ASSERT_WORKER_AUTHORITY",
       "payload": {
-        "accepted_work_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-        "work_id": "work:1"
-      }
-    },
-    {
-      "kind": "COMPLETE_WITH_NO_RESULT",
-      "payload": {
-        "accepted_work_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-        "evidence_bindings": [
-          "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-        ],
-        "no_result_binding": "",
-        "terminal_record_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "work_id": "work:1"
       }
     }

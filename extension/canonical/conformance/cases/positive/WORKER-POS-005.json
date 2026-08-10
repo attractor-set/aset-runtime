@@ -1,44 +1,49 @@
 {
   "case_id": "WORKER-POS-005",
   "expected": {
-    "accepted": true,
     "authority_created": false,
     "code": "IDEMPOTENT_REPLAY",
     "effect_permitted": false,
+    "recognized": true,
     "seed_resolution_created": false,
     "state_changed": false,
-    "work_state": "ACCEPTED"
+    "work_state": "RESULT"
   },
   "polarity": "positive",
   "steps": [
     {
-      "kind": "ACCEPT_WORK",
+      "kind": "START_WORK",
       "payload": {
-        "accepted_work_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-        "context_binding": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
-        "execution_constraints_binding": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
-        "input_bindings": [
-          "sha256:5555555555555555555555555555555555555555555555555555555555555555"
-        ],
-        "predecessor_terminal_binding": null,
+        "work_binding_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "work_descriptor_binding": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
         "work_id": "work:1",
-        "work_spec_binding": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
         "worker_binding": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
       }
     },
     {
-      "kind": "ACCEPT_WORK",
+      "kind": "END_WORK",
       "payload": {
-        "accepted_work_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-        "context_binding": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
-        "execution_constraints_binding": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
-        "input_bindings": [
-          "sha256:5555555555555555555555555555555555555555555555555555555555555555"
+        "evidence_bindings": [
+          "sha256:9999999999999999999999999999999999999999999999999999999999999999"
         ],
-        "predecessor_terminal_binding": null,
-        "work_id": "work:1",
-        "work_spec_binding": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
-        "worker_binding": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+        "terminal_binding": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+        "terminal_kind": "RESULT",
+        "terminal_record_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "work_binding_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "work_id": "work:1"
+      }
+    },
+    {
+      "kind": "END_WORK",
+      "payload": {
+        "evidence_bindings": [
+          "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+        ],
+        "terminal_binding": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+        "terminal_kind": "RESULT",
+        "terminal_record_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "work_binding_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "work_id": "work:1"
       }
     }
   ]

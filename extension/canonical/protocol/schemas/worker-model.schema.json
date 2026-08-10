@@ -3,7 +3,7 @@
   "additionalProperties": true,
   "properties": {
     "canon_id": {
-      "const": "ASET-WORKER-CANON-0.1-ALPHA1"
+      "const": "ASET-WORKER-CANON-0.1-ALPHA2"
     },
     "document_type": {
       "const": "aset-worker-extension-model"
@@ -12,23 +12,25 @@
       "const": "ASET-WORKER-EXTENSION"
     },
     "invariants": {
-      "minItems": 11,
+      "maxItems": 9,
+      "minItems": 9,
       "type": "array"
     },
     "operations": {
-      "maxItems": 4,
-      "minItems": 4,
+      "maxItems": 2,
+      "minItems": 2,
       "type": "array"
     },
     "requirements": {
-      "minItems": 11,
+      "maxItems": 9,
+      "minItems": 9,
       "type": "array"
     },
     "status": {
       "const": "SEMANTIC_BOOTSTRAP"
     },
     "version": {
-      "const": "0.1.0-alpha.0"
+      "const": "0.1.0-alpha.1"
     }
   },
   "required": [

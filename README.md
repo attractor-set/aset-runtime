@@ -1,35 +1,37 @@
 # ASET Worker Extension
 
-`aset-worker-extension` is a semantic bootstrap for the productive-work boundary of ASET.
+`aset-worker-extension` is the minimal productive-attempt boundary of ASET.
 
-The normative bootstrap surface models one work identity through the lifecycle:
+The normative bootstrap surface recognizes one work identity through only two operations:
 
 ```text
 UNREGISTERED
-    |
-    | ACCEPT_WORK
-    v
- ACCEPTED
     |
     | START_WORK
     v
   RUNNING
    /   \
   /     \
+END      END
+ |        |
 RESULT  NO_RESULT
-   \     /
+   \      /
     \_XOR/
 ```
 
-`NO_RESULT` is a first-class terminal record. It is **not** the absence of a record and it is not equivalent to `RUNNING` without a result.
+The canonical state is append-only: a work identity first gains one exact immutable started-work binding and may later gain one exact immutable terminal record. `RUNNING`, `RESULT`, and `NO_RESULT` are projections of those facts.
 
-`RESULT` does not mean success, and `NO_RESULT` does not mean failure. The extension standardizes whether exact result material was produced for the exact work invocation, not whether that material is good, accepted, useful, or authorized.
+`NO_RESULT` is a first-class terminal assertion. It is **not** the absence of a record and it is not equivalent to `RUNNING` without a terminal record.
+
+`RESULT` does not mean success, and `NO_RESULT` does not mean failure. Worker standardizes only whether one exact productive attempt terminally produced result material.
+
+Assignment, acceptance, queueing, scheduling, retry provenance, descriptor internals, verification policy and result quality are deliberately outside the Worker canon. Profiles may define them without changing the base lifecycle.
 
 Worker output, evidence and execution do not create ASET Seed Authority, do not create a Seed Resolution, and do not grant external effect permission by implication.
 
 ## Bootstrap status
 
-This repository is intentionally `0.1.0-alpha.0` and not release-ready. The machine-readable canon, protocol schemas, executable oracle, conformance corpus, finite-state checker and a draft TLA+ safety projection are present. Canon-to-TLA equivalence and mechanically proved Seed refinement are explicitly open gates.
+This semantic revision is `0.1.0-alpha.1` / `ASET-WORKER-CANON-0.1-ALPHA2` and is not release-ready. Because the lifecycle was minimized after the previous proof materialization, formal assurance is intentionally reset to `OPEN`; the new generated projection, lifecycle safety proof candidate and Seed-stuttering proof candidate must be mechanically closed again before release.
 
 ## Local gate
 

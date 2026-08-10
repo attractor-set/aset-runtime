@@ -3,73 +3,63 @@ EXTENDS FiniteSets
 
 CONSTANT WorkIds
 
-VARIABLES accepted, started, resultWorks, noResultWorks
+VARIABLES started, resultWorks, noResultWorks
 
-vars == <<accepted, started, resultWorks, noResultWorks>>
+vars == <<started, resultWorks, noResultWorks>>
 
 Init ==
-    /\ accepted = {}
     /\ started = {}
     /\ resultWorks = {}
     /\ noResultWorks = {}
 
 Terminal == resultWorks \cup noResultWorks
 
-AcceptWork(w) ==
-    /\ w \in WorkIds
-    /\ w \notin accepted
-    /\ accepted' = accepted \cup {w}
-    /\ UNCHANGED <<started, resultWorks, noResultWorks>>
-
 StartWork(w) ==
-    /\ w \in accepted
+    /\ w \in WorkIds
     /\ w \notin started
-    /\ w \notin Terminal
     /\ started' = started \cup {w}
-    /\ UNCHANGED <<accepted, resultWorks, noResultWorks>>
+    /\ UNCHANGED <<resultWorks, noResultWorks>>
 
-CompleteWithResult(w) ==
+EndWorkWithResult(w) ==
     /\ w \in started
     /\ w \notin Terminal
     /\ resultWorks' = resultWorks \cup {w}
-    /\ UNCHANGED <<accepted, started, noResultWorks>>
+    /\ UNCHANGED <<started, noResultWorks>>
 
-CompleteWithNoResult(w) ==
+EndWorkWithNoResult(w) ==
     /\ w \in started
     /\ w \notin Terminal
     /\ noResultWorks' = noResultWorks \cup {w}
-    /\ UNCHANGED <<accepted, started, resultWorks>>
+    /\ UNCHANGED <<started, resultWorks>>
+
+EndWork(w, terminalKind) ==
+    \/ /\ terminalKind = "RESULT"
+       /\ EndWorkWithResult(w)
+    \/ /\ terminalKind = "NO_RESULT"
+       /\ EndWorkWithNoResult(w)
 
 RecognizedWorkerTransition ==
-    \/ \E w \in WorkIds : AcceptWork(w)
     \/ \E w \in WorkIds : StartWork(w)
-    \/ \E w \in WorkIds : CompleteWithResult(w)
-    \/ \E w \in WorkIds : CompleteWithNoResult(w)
+    \/ \E w \in WorkIds, terminalKind \in {"RESULT", "NO_RESULT"} : EndWork(w, terminalKind)
 
 Next == RecognizedWorkerTransition
 
 Spec == Init /\ [][Next]_vars
 
 TypeOK ==
-    /\ accepted \subseteq WorkIds
     /\ started \subseteq WorkIds
     /\ resultWorks \subseteq WorkIds
     /\ noResultWorks \subseteq WorkIds
 
-StartedImpliesAccepted == started \subseteq accepted
 ResultImpliesStarted == resultWorks \subseteq started
 NoResultImpliesStarted == noResultWorks \subseteq started
 ResultXorNoResult == resultWorks \cap noResultWorks = {}
 
 WorkerSafety ==
     /\ TypeOK
-    /\ StartedImpliesAccepted
     /\ ResultImpliesStarted
     /\ NoResultImpliesStarted
     /\ ResultXorNoResult
-
-AcceptedAppendOnlyStep == accepted \subseteq accepted'
-AcceptedAppendOnly == [][AcceptedAppendOnlyStep]_vars
 
 StartedAppendOnlyStep == started \subseteq started'
 StartedAppendOnly == [][StartedAppendOnlyStep]_vars

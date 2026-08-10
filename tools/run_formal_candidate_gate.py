@@ -26,7 +26,6 @@ PROOFS = [
         "path": FORMAL / "WorkerLifecycleProofs.tla",
         "final_theorems": [
             "SpecImpliesAlwaysWorkerSafety",
-            "SpecImpliesAcceptedAppendOnly",
             "SpecImpliesStartedAppendOnly",
             "SpecImpliesTerminalAppendOnly",
             "SpecImpliesWorkerStateChangesOnlyByRecognizedTransition",
