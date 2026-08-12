@@ -1,0 +1,45 @@
+name: Seed stutter assurance
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  seed-stutter-assurance:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Worker Extension
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned public ASET assurance
+        uses: actions/checkout@v4
+        with:
+          repository: attractor-set/ASET
+          ref: e89d984203a126f8bc62467224cdf6c5374dada7
+          path: .upstream/ASET
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: python -m pip install -r requirements-ci.txt
+      - run: python .upstream/ASET/tools/build_seed_recognition_boundary_assurance.py --check
+      - name: Check Worker -> Seed stutter -> public-v60 assurance
+        run: >-
+          python tools/check_seed_stutter_assurance.py
+          --seed-root .upstream/ASET
+          --output dist/worker-seed-stutter-assurance.json
+      - run: python -m pytest -q tests/test_seed_stutter_assurance.py
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: worker-seed-stutter-assurance
+          if-no-files-found: warn
+          path: dist/worker-seed-stutter-assurance.json

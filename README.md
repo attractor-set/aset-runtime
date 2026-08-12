@@ -46,3 +46,15 @@ python -m pytest -q
 ```
 
 The local gate uses only the Python standard library.
+
+## Public v60 Seed-stutter assurance
+
+`ASET-WORKER-SEED-STUTTER-ASSURANCE-V1` is a separate non-normative assurance
+perimeter. When the materialized Worker-to-Seed stuttering evidence is
+`MECHANICALLY_PROVED` (as in the current proof artifact), the checker composes
+that evidence with the public ASET v60 recognition-boundary assurance only when
+both bind the exact same frozen `SeedResolution.tla` subject.
+
+This does not create a new composed TLAPS theorem and does not change Worker
+semantics: productive work remains non-authoritative and grants no Seed
+recognition or external effect permission by implication.

@@ -23,3 +23,11 @@ Worker, его способность, исполнение, результат 
 ```bash
 python tools/run_local_gate.py
 ```
+
+## Public v60 assurance Seed-stutter
+
+Ненормативный профиль `ASET-WORKER-SEED-STUTTER-ASSURANCE-V1` связывает
+материализованное доказательство Worker -> Seed stuttering с публичной
+assurance-базой ASET v60 только через точный общий `SeedResolution.tla`.
+Это не новый составной TLAPS theorem и не изменение Worker semantics: Worker
+не создаёт Seed recognition и не получает право внешнего эффекта по факту работы.
