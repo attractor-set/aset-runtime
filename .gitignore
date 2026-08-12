@@ -23,3 +23,9 @@ dist/formal-candidate/
 
 # Reproducible local formal release execution output
 dist/formal-release-gate.json
+
+# Pinned public assurance checkout
+.upstream/
+
+# Local Seed stutter assurance evidence
+dist/worker-seed-stutter-assurance.json

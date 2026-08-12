@@ -1,0 +1,62 @@
+{
+  "assurance_id": "ASET-WORKER-SEED-STUTTER-ASSURANCE-V1",
+  "document_type": "aset-worker-seed-stutter-assurance-profile",
+  "schema_version": 1,
+  "normative": false,
+  "normative_precedence": "NONE",
+  "relation_type": "EVIDENCE_COMPOSITION_OVER_SHARED_SEED_SUBJECT",
+  "worker_subject": {
+    "canon_id": "ASET-WORKER-CANON-0.1-ALPHA2",
+    "extension_version": "0.1.0-alpha.1",
+    "seed_refinement_scope": "WORKER_ONLY_OPERATIONS_AS_PINNED_SEED_STUTTER",
+    "seed_refinement_obligations": 19,
+    "model_sha256": "sha256:e7769e1ea41fce4ebf05f66adb03f6c048f3040ec215011c8d070b62a32b8ff0",
+    "seed_stuttering_sha256": "sha256:a0b91fb37442b031ab31960f72b072644116f31f9d8797b756c5c183d72f2b5e",
+    "seed_stuttering_proof_sha256": "sha256:8f5f8a5c3ba55436511ea792e69ec6fbd2131e1a767c31339c253f6751aab19f",
+    "seed_refinement_evidence_sha256": "sha256:9f2ee796783bbd7476234e41acf16b2a8ae588a30f226d7ebf13df7058e81e2f"
+  },
+  "shared_seed_subject": {
+    "canon_id": "ASET-SEED-RESOLUTION-CANON-0.3-ALPHA1",
+    "canon_version": "0.3.0-alpha.1",
+    "seed_resolution_sha256": "sha256:1c0ebb27ed52da289f0981dcb11b61b6a7fc5c4a030ba434ae0b1d53b286b926"
+  },
+  "public_v60_subject": {
+    "repository": "https://github.com/attractor-set/ASET",
+    "commit": "e89d984203a126f8bc62467224cdf6c5374dada7",
+    "assurance_id": "ASET-SEED-RECOGNITION-BOUNDARY-ASSURANCE-V60",
+    "package_file_sha256": "sha256:1b1efd4c75e253c78080423275963629c014085a73f27a2259c08de1c624bbd8",
+    "package_digest": "sha256:d537ad0555a0746e297f309e841aaccc8f059a44177400fd155253037a31747c",
+    "expected_tlaps_obligations": 2257,
+    "required_proof_relations": [
+      {
+        "id": "CANONICAL_PHASE_TO_SEED",
+        "final_theorem": "CanonicalPhaseSeedRefinesSeedResolution",
+        "expected_obligations": 299
+      },
+      {
+        "id": "SEED_TO_CANONICAL_PHASE",
+        "final_theorem": "SeedResolutionRefinesCanonicalPhaseSeed",
+        "expected_obligations": 370
+      }
+    ]
+  },
+  "projection_contract": {
+    "worker_operations": "SEED_STUTTER",
+    "worker_owned_seed_state": false,
+    "worker_creates_seed_resolution": false,
+    "worker_grants_external_effect_permission": false
+  },
+  "claim_boundary": {
+    "included": [
+      "exact identity composition of the mechanically materialized Worker-to-Seed stuttering proof with public v60 over the same SeedResolution source",
+      "Worker lifecycle transitions preserve Seed-owned state",
+      "Worker result material does not create Seed recognition or effect permission"
+    ],
+    "excluded": [
+      "a new mechanically composed Worker-to-v60 TLAPS theorem",
+      "normative modification of ASET Seed or ASET Worker Extension",
+      "implementation conformance",
+      "worker result quality, verification policy, liveness, cryptographic correctness, scheduling or execution technology"
+    ]
+  }
+}
