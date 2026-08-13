@@ -3,15 +3,15 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "aset-worker-extension-bootstrap"
-version = "0.1.0a1"
-description = "Minimal productive-attempt semantic bootstrap for ASET Worker Extension"
+name = "aset-worker-extension"
+version = "0.1.0a4"
+description = "ASET Worker Alpha4 productive-attempt semantic extension"
 requires-python = ">=3.11"
 license = {text = "Apache-2.0"}
-
-[project.optional-dependencies]
-dev = ["pytest>=8,<9", "jsonschema>=4.20,<5"]
 
 [tool.pytest.ini_options]
 addopts = "-q"
 pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100

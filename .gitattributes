@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.aset text eol=lf
+*.forth text eol=lf
+*.tla text eol=lf

@@ -1,8 +1,13 @@
 # ASET Worker Extension
 
-`aset-worker-extension` is the minimal productive-attempt boundary of ASET.
+ASET Worker Alpha4 is the current representation of the minimal productive-attempt
+layer inherited from ASET Seed 0.4alpha.
 
-The normative bootstrap surface recognizes one work identity through only two operations:
+Worker owns only productive-attempt state. It does not own Seed recognition,
+Authority, or effect permission. Every Worker transition is a stuttering step with
+respect to the exact bound Seed state.
+
+The lifecycle is intentionally small:
 
 ```text
 UNREGISTERED
@@ -15,34 +20,28 @@ UNREGISTERED
 END      END
  |        |
 RESULT  NO_RESULT
-   \      /
-    \_XOR/
 ```
 
-The canonical state is append-only: a work identity first gains one exact immutable started-work binding and may later gain one exact immutable terminal record. `RUNNING`, `RESULT`, and `NO_RESULT` are projections of those facts.
+`RESULT` means result material was produced; it does not imply correctness or
+acceptance. `NO_RESULT` is an explicit terminal assertion, not the absence of a
+record and not an implicit failure classification.
 
-`NO_RESULT` is a first-class terminal assertion. It is **not** the absence of a record and it is not equivalent to `RUNNING` without a terminal record.
+Active structure:
 
-`RESULT` does not mean success, and `NO_RESULT` does not mean failure. Worker standardizes only whether one exact productive attempt terminally produced result material.
+- `worker/alpha4/WORKER.aset` — machine-readable Worker Alpha4 semantic subject.
+- `worker/alpha4/operational/` — restricted-Forth Worker expression.
+- `worker/alpha4/formal/` — relational expression, pairing, safety, and Seed-inheritance proofs.
+- `theory/worker-lifecycle/` — temporal lifecycle theory over the Alpha4 relations.
+- `upstream/ASET_SEED_ALPHA4_BINDING.aset` — exact content binding to ASET Seed 0.4alpha.
+- `history/REFERENCES.aset` — immutable references to the superseded Alpha2 canon.
+- `tools/alpha4_worker_gate.py` — verification gate.
 
-Assignment, acceptance, queueing, scheduling, retry provenance, descriptor internals, verification policy and result quality are deliberately outside the Worker canon. Profiles may define them without changing the base lifecycle.
+The Alpha4 representation claims no compatibility with the previous Worker canon.
 
-Worker output, evidence and execution do not create ASET Seed Authority, do not create a Seed Resolution, and do not grant external effect permission by implication.
+Verify locally:
 
-## Bootstrap status
-
-This semantic revision is `0.1.0-alpha.1` / `ASET-WORKER-CANON-0.1-ALPHA2` and is not release-ready. Because the lifecycle was minimized after the previous proof materialization, formal assurance is intentionally reset to `OPEN`; the new generated projection, lifecycle safety proof candidate and Seed-stuttering proof candidate must be mechanically closed again before release.
-
-## Local gate
-
-```bash
-python tools/run_local_gate.py
+```text
+python -m tools.alpha4_worker_gate
 ```
 
-Optional pytest suite:
-
-```bash
-python -m pytest -q
-```
-
-The local gate uses only the Python standard library.
+Copyright and attribution are in `NOTICE`. Licensing terms are in `LICENSE`.

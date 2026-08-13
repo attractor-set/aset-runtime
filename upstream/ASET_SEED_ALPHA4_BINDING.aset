@@ -1,0 +1,21 @@
+ASET-SEED-BINDING 1 ASET-SEED-0.4-ALPHA CONTENT-ADDRESSED
+REPOSITORY https://github.com/attractor-set/aset-seed
+COMMIT 08bc0c4dfb5c158fe4641c93a87c7c5914cb2d2c
+COMPATIBILITY 0.3 NONE
+SEMANTIC-PRECEDENCE NONE
+
+SOURCE seed/alpha4/SEED.aset sha256:0d360e27aace64c8892a557771282844df3676642646204f1b396187581eee04
+SOURCE seed/alpha4/operational/components.forth sha256:669174b785d97e7391dc25383f93db3574e4bf680ae9fcd8617d567eb08979da
+SOURCE seed/alpha4/formal/RestrictedOperationalSemantics.tla sha256:5d2e104351a4a3f3ff3cd9dc509c020eabb78baf94878e1c12f58faa34a2b080
+SOURCE seed/alpha4/formal/ComponentRelations.tla sha256:3980d68ef27a505fd116c3bf374f20b9bdd49572352f0d50746374930893b3cb
+SOURCE seed/alpha4/formal/OperationalRelationalPairingProofs.tla sha256:c164b8ee47f7fe6278f3bfe7e72c96d3e5d2ad9ad5ae15f4fcd0af36d9c6802c
+SOURCE seed/alpha4/formal/ComponentCompositionProofs.tla sha256:7578230f18748c5a14e5aa6037ae2eb1ac2e6cd10a917ecf0a745b5071f1db2b
+SOURCE seed/alpha4/binding/graph.cddl sha256:88e630a3722de9a6bd894581c1959f3bee85ca5236185894ba043a83151adb08
+SOURCE theory/local-recognition/formal/LocalRecognitionAlgebra.tla sha256:f953519975c394e05ed3e6ecce0f7727005284ea61aadf757a2f1c5d1b6ec837
+SOURCE theory/local-recognition/formal/RecognitionCardinality.tla sha256:945ee88758ade687a999c77788b1b3fbfe7f29253239eaab5fbe82d7edd10c75
+SOURCE theory/local-recognition/formal/RecognitionCardinalityProofs.tla sha256:038e0f4b7c65ac7d632e5ca050fbff6567126ccb2c4cfaa914bf306b5b5d5b06
+
+REQUIRED-SEED-STATE seed/alpha4/formal/ComponentRelations.tla StateType
+REQUIRED-SEED-EFFECT seed/alpha4/formal/ComponentRelations.tla EffectPermitted
+WORKER-INHERITANCE START-WORK SEED-STATE-STUTTER
+WORKER-INHERITANCE END-WORK SEED-STATE-STUTTER

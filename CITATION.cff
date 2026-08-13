@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+title: "ASET Worker Extension"
+message: "If you use this semantic specification, cite this repository."
+type: software
+authors:
+  - family-names: "Prychyna"
+    given-names: "Dzmitry"
+    alias: "Attractor Set"
+version: "0.1.0-alpha.4"
+license: Apache-2.0
+repository-code: "https://github.com/attractor-set/aset-worker-extension"

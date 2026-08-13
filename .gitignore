@@ -1,25 +1,15 @@
-# Python
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.ruff_cache/
 .coverage
 htmlcov/
-
-# Virtual environments
 .venv/
 venv/
-
-# TLA+ / TLAPS local caches
 .tlacache/
-
-# Local formal execution workspace
-dist/formal-candidate/
-
-# Editors / OS
+.upstream/
+dist/
 .vscode/
 .idea/
 *~
 .DS_Store
-
-# Reproducible local formal release execution output
-dist/formal-release-gate.json

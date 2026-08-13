@@ -1,0 +1,49 @@
+ASET-WORKER 1 ASET-WORKER-ALPHA4 alpha4
+SEMANTIC-PRECEDENCE NONE
+ALPHA2-COMPATIBILITY NONE
+
+UPSTREAM-SUBJECT ASET-SEED-0.4-ALPHA
+UPSTREAM-BINDING upstream/ASET_SEED_ALPHA4_BINDING.aset
+
+STATE STARTED SET-OF-EXACT-STARTED-WORK-BINDINGS
+STATE TERMINALS SET-OF-EXACT-TERMINAL-WORK-BINDINGS
+TRANSITION START-WORK
+TRANSITION END-WORK
+
+OPERATIONAL worker/alpha4/operational/components.forth
+RELATIONAL worker/alpha4/formal/WorkerRelations.tla
+FORMAL-REFLECTION worker/alpha4/formal/RestrictedOperationalSemantics.tla
+
+PAIR ASET-WORKER-COMPONENT-START-MISSING START-WORK StartMissing OperationalStartMissing StartMissingPairing
+PAIR ASET-WORKER-COMPONENT-START-FRESH START-WORK StartFresh OperationalStartFresh StartFreshPairing
+PAIR ASET-WORKER-COMPONENT-START-REPLAY START-WORK StartReplay OperationalStartReplay StartReplayPairing
+PAIR ASET-WORKER-COMPONENT-START-CONFLICT START-WORK StartConflict OperationalStartConflict StartConflictPairing
+PAIR ASET-WORKER-COMPONENT-END-NOT-STARTED END-WORK EndNotStarted OperationalEndNotStarted EndNotStartedPairing
+PAIR ASET-WORKER-COMPONENT-END-BINDING-MISMATCH END-WORK EndBindingMismatch OperationalEndBindingMismatch EndBindingMismatchPairing
+PAIR ASET-WORKER-COMPONENT-END-KIND-REQUIRED END-WORK EndKindRequired OperationalEndKindRequired EndKindRequiredPairing
+PAIR ASET-WORKER-COMPONENT-END-BINDING-REQUIRED END-WORK EndBindingRequired OperationalEndBindingRequired EndBindingRequiredPairing
+PAIR ASET-WORKER-COMPONENT-END-RESULT END-WORK EndResult OperationalEndResult EndResultPairing
+PAIR ASET-WORKER-COMPONENT-END-NO-RESULT END-WORK EndNoResult OperationalEndNoResult EndNoResultPairing
+PAIR ASET-WORKER-COMPONENT-END-REPLAY END-WORK EndReplay OperationalEndReplay EndReplayPairing
+PAIR ASET-WORKER-COMPONENT-END-CONFLICT END-WORK EndConflict OperationalEndConflict EndConflictPairing
+
+SEED-PROJECTION START-WORK STUTTER
+SEED-PROJECTION END-WORK STUTTER
+SEED-RECOGNITION-OWNER SEED-LOCAL-AUTHORITY
+AUTHORITY-CREATED-BY-WORKER NEVER
+EFFECT-PERMITTED-BY-WORKER NEVER
+
+DERIVED-STATE UNREGISTERED ABSENT-START
+DERIVED-STATE RUNNING STARTED-AND-NOT-TERMINAL
+DERIVED-STATE RESULT TERMINAL-KIND-RESULT
+DERIVED-STATE NO_RESULT TERMINAL-KIND-NO_RESULT
+TERMINAL-RELATION RESULT-XOR-NO_RESULT
+
+PROOF OPERATIONAL_RELATIONAL_PAIRING worker/alpha4/formal/OperationalRelationalPairingProofs.tla OperationalRelationalPairing
+PROOF WORKER_SAFETY worker/alpha4/formal/WorkerSafetyProofs.tla WorkerTransitionsPreserveWorkerSafety
+PROOF SEED_INHERITANCE worker/alpha4/formal/SeedInheritanceProofs.tla WorkerTransitionsInheritSeedByStuttering
+PROOF LIFECYCLE theory/worker-lifecycle/formal/WorkerLifecycleProofs.tla SpecImpliesAlwaysWorkerSafety
+
+CHECK BINDING tools/validate_alpha4_worker.py
+CHECK PAIRED_EXPRESSION tools/alpha4_worker_paired_expression.py
+GATE tools/alpha4_worker_gate.py
