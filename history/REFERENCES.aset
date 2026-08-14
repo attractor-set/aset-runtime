@@ -1,0 +1,7 @@
+ASET-HISTORY 1
+
+STATE ASET-WORKER-CANON-0.1-ALPHA2 HISTORICAL
+STATUS SUPERSEDED
+ACTIVE-SEMANTICS FALSE
+EXECUTABLE-SURFACE NONE
+NOTE Superseded public Runtime bootstrap representation; retained in Git history only.
