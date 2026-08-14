@@ -1,31 +1,13 @@
-# Python
 __pycache__/
 *.py[cod]
 .pytest_cache/
-.coverage
-htmlcov/
-
-# Virtual environments
+.ruff_cache/
 .venv/
 venv/
-
-# TLA+ / TLAPS local caches
 .tlacache/
-
-# Local formal execution workspace
-dist/formal-candidate/
-
-# Editors / OS
+dist/
+.upstream/
 .vscode/
 .idea/
 *~
 .DS_Store
-
-# Reproducible local formal release execution output
-dist/formal-release-gate.json
-
-# Pinned public assurance checkout
-.upstream/
-
-# Local Seed stutter assurance evidence
-dist/worker-seed-stutter-assurance.json

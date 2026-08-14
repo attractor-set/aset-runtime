@@ -1,0 +1,108 @@
+name: verify
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements-ci.txt
+
+      - name: Materialize exact ASET Seed 0.4alpha base
+        shell: bash
+        run: |
+          set -euo pipefail
+          seed_tag="seed-0.4alpha-3way"
+          seed_commit="0028f1d25a4f1d052a9b998baf402898446ac599"
+          seed_root="$RUNNER_TEMP/aset-seed-alpha4"
+          seed_release_zip="$RUNNER_TEMP/ASET-Seed-0.4alpha.zip"
+          seed_profiles_zip="$RUNNER_TEMP/ASET-Seed-0.4alpha-profiles.zip"
+          seed_release_unpack="$RUNNER_TEMP/aset-seed-release"
+          seed_profiles_unpack="$RUNNER_TEMP/aset-seed-profiles"
+
+          git clone --depth 1 --branch "$seed_tag" \
+            https://github.com/attractor-set/aset-seed.git "$seed_root"
+          test "$(git -C "$seed_root" rev-parse HEAD)" = "$seed_commit"
+
+          curl --fail --location --retry 3 \
+            --output "$seed_release_zip" \
+            "https://github.com/attractor-set/aset-seed/releases/download/$seed_tag/ASET-Seed-0.4alpha.zip"
+          curl --fail --location --retry 3 \
+            --output "$seed_profiles_zip" \
+            "https://github.com/attractor-set/aset-seed/releases/download/$seed_tag/ASET-Seed-0.4alpha-profiles.zip"
+
+          echo "4170d9111c353c3607cf9ada3398c15007acfed7b2d486f5376c72d3f13ed331  $seed_release_zip" \
+            | sha256sum --check
+          echo "790588c145a390da6d47ac08901945253904aa053d170bfd35f6fb20dd1ae5a1  $seed_profiles_zip" \
+            | sha256sum --check
+
+          mkdir -p "$seed_release_unpack" "$seed_profiles_unpack"
+          unzip -q "$seed_release_zip" -d "$seed_release_unpack"
+          unzip -q "$seed_profiles_zip" -d "$seed_profiles_unpack"
+
+          seed_release_root="$seed_release_unpack/ASET-Seed-0.4alpha"
+          seed_profiles_root="$seed_profiles_unpack/ASET-Seed-0.4alpha-profiles"
+          test -f "$seed_release_root/RELEASE_MANIFEST.json"
+          test -f "$seed_profiles_root/RELEASE_PROFILE_MANIFEST.json"
+
+          echo "SEED_ALPHA4_ROOT=$seed_root" >> "$GITHUB_ENV"
+          echo "SEED_RELEASE_ROOT=$seed_release_root" >> "$GITHUB_ENV"
+          echo "SEED_PROFILES_ROOT=$seed_profiles_root" >> "$GITHUB_ENV"
+
+      - name: Download pinned TLAPM
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/tlapm-1.6.0-pre-x86_64-linux-gnu.tar.gz"
+          unpack="$RUNNER_TEMP/tlapm-unpacked"
+          curl --fail --location --retry 3 \
+            --output "$archive" \
+            https://github.com/tlaplus/tlapm/releases/download/1.6.0-pre/tlapm-1.6.0-pre-x86_64-linux-gnu.tar.gz
+          echo "bfa5e5350ac1ec7202feecad0a4a71a5bb58c16a49660448b35b6f371ba9e2f5  $archive" \
+            | sha256sum --check
+          mkdir -p "$unpack"
+          tar -xzf "$archive" -C "$unpack"
+          tlapm_bin="$(find "$unpack" -type f -path '*/bin/tlapm' -print -quit)"
+          test -n "$tlapm_bin"
+          test -x "$tlapm_bin"
+          test "$("$tlapm_bin" --version)" = "4600b24"
+          echo "TLAPM_BIN=$tlapm_bin" >> "$GITHUB_ENV"
+
+      - name: Verify and materialize Runtime Alpha4 release
+        run: |
+          python -m tools.alpha4_runtime_release_gate \
+            --seed-root "$SEED_ALPHA4_ROOT" \
+            --seed-release-root "$SEED_RELEASE_ROOT" \
+            --seed-profiles-root "$SEED_PROFILES_ROOT" \
+            --tlapm "$TLAPM_BIN"
+
+      - name: Verify exact committed tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- .
+          git diff --cached --exit-code -- .
+          test -z "$(git status --porcelain --untracked-files=all)"
+
+      - name: Upload Runtime Alpha4 release assurance
+        uses: actions/upload-artifact@v4
+        with:
+          name: aset-runtime-alpha4-release-${{ github.sha }}
+          if-no-files-found: error
+          path: |
+            dist/ASET-Runtime-0.1.0-alpha.4.zip
+            dist/ASET-Runtime-0.1.0-alpha.4-profiles.zip
+            dist/runtime-release-assembled-tlaps-evidence.json
+            dist/runtime-python-airgap-evidence.json
+            dist/runtime-release-admission-certificate.json

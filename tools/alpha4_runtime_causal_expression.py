@@ -1,0 +1,243 @@
+from __future__ import annotations
+
+from copy import deepcopy
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+from tools.alpha4_runtime_paired_expression import exact_start, exact_terminal
+
+ROOT = Path(__file__).resolve().parents[1]
+CAUSAL = ROOT / "runtime/alpha4/causal/components.petri"
+MANIFEST = ROOT / "runtime/alpha4/RUNTIME.aset"
+
+
+class CausalExpressionError(RuntimeError):
+    pass
+
+
+def require(condition: bool, message: str) -> None:
+    if not condition:
+        raise CausalExpressionError(message)
+
+
+@dataclass(frozen=True)
+class CausalTransition:
+    symbol: str
+    component_id: str
+    requirements: tuple[str, ...]
+    effects: tuple[str, ...]
+    outputs: tuple[tuple[str, str], ...]
+
+    def output_map(self) -> dict[str, str]:
+        return dict(self.outputs)
+
+
+@dataclass(frozen=True)
+class CausalNet:
+    schema_version: int
+    subject_id: str
+    semantic_precedence: str
+    mode: str
+    transitions: tuple[CausalTransition, ...]
+
+
+def _lines(path: Path) -> list[str]:
+    return [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def parse_causal_net(path: Path = CAUSAL) -> CausalNet:
+    lines = _lines(path)
+    require(lines, "causal source is empty")
+    head = lines[0].split()
+    require(
+        head == ["ASET-CAUSAL-NET", "1", "ASET-RUNTIME-ALPHA4-CAUSAL"],
+        "causal header mismatch",
+    )
+    semantic_precedence = ""
+    mode = ""
+    transitions: list[CausalTransition] = []
+    index = 1
+    while index < len(lines):
+        tokens = lines[index].split()
+        if tokens[0] == "SEMANTIC-PRECEDENCE":
+            require(tokens == ["SEMANTIC-PRECEDENCE", "NONE"], "causal precedence drift")
+            semantic_precedence = "NONE"
+            index += 1
+            continue
+        if tokens[0] == "MODE":
+            require(tokens == ["MODE", "STATE-TRANSITION"], "causal mode drift")
+            mode = "STATE-TRANSITION"
+            index += 1
+            continue
+        require(
+            tokens[0] == "TRANSITION" and len(tokens) == 3,
+            f"invalid causal statement: {lines[index]}",
+        )
+        symbol, component_id = tokens[1], tokens[2]
+        requirements: list[str] = []
+        effects: list[str] = []
+        outputs: list[tuple[str, str]] = []
+        index += 1
+        while index < len(lines) and lines[index] != "END":
+            body = lines[index].split()
+            if body[0] == "REQUIRE":
+                require(len(body) == 2, f"{symbol}: invalid REQUIRE")
+                requirements.append(body[1])
+            elif body[0] == "EFFECT":
+                require(len(body) == 2, f"{symbol}: invalid EFFECT")
+                effects.append(body[1])
+            elif body[0] == "OUTPUT":
+                require(len(body) == 3, f"{symbol}: invalid OUTPUT")
+                outputs.append((body[1], body[2]))
+            else:
+                raise CausalExpressionError(f"{symbol}: unsupported statement {body[0]}")
+            index += 1
+        require(index < len(lines) and lines[index] == "END", f"{symbol}: END missing")
+        transitions.append(
+            CausalTransition(
+                symbol=symbol,
+                component_id=component_id,
+                requirements=tuple(requirements),
+                effects=tuple(effects),
+                outputs=tuple(outputs),
+            )
+        )
+        index += 1
+    require(semantic_precedence == "NONE", "causal semantic precedence missing")
+    require(mode == "STATE-TRANSITION", "causal mode missing")
+    require(len(transitions) == 8, "Runtime causal surface must contain exactly eight transitions")
+    require(len({item.symbol for item in transitions}) == 8, "duplicate causal transition")
+    require(len({item.component_id for item in transitions}) == 8, "duplicate causal component")
+    return CausalNet(1, "ASET-RUNTIME-ALPHA4-CAUSAL", semantic_precedence, mode, tuple(transitions))
+
+
+def manifest_bindings() -> dict[str, str]:
+    result: dict[str, str] = {}
+    for line in _lines(MANIFEST):
+        parts = line.split()
+        if parts[0] == "CAUSAL-BIND":
+            require(len(parts) == 3, f"invalid CAUSAL-BIND: {line}")
+            result[parts[1]] = parts[2]
+    require(len(result) == 8, "Runtime causal manifest bindings must contain eight entries")
+    return result
+
+
+def check_causal_bindings() -> CausalNet:
+    net = parse_causal_net()
+    actual = {item.component_id: item.symbol for item in net.transitions}
+    require(actual == manifest_bindings(), "causal component binding mismatch")
+    for transition in net.transitions:
+        outputs = transition.output_map()
+        require(outputs.get("SEED_ACTION") == "STUTTER", f"{transition.symbol}: Seed action drift")
+        require(outputs.get("SEED_EFFECT") == "FALSE", f"{transition.symbol}: Seed effect drift")
+    return net
+
+
+def _bool(value: str) -> bool:
+    require(value in {"TRUE", "FALSE"}, f"invalid causal boolean: {value}")
+    return value == "TRUE"
+
+
+def _copy_state(state: dict[str, list[dict[str, Any]]]) -> dict[str, list[dict[str, Any]]]:
+    return {"starts": deepcopy(state["starts"]), "terminals": deepcopy(state["terminals"])}
+
+
+def _result(transition: CausalTransition) -> dict[str, Any]:
+    outputs = transition.output_map()
+    return {
+        "accepted": _bool(outputs["ACCEPTED"]),
+        "code": outputs["CODE"],
+        "state_changed": _bool(outputs["STATE_CHANGED"]),
+        "seed_projection": {
+            "action": outputs["SEED_ACTION"],
+            "effect_permitted": _bool(outputs["SEED_EFFECT"]),
+        },
+    }
+
+
+def causal_start(
+    state: dict[str, list[dict[str, Any]]], start: dict[str, Any], net: CausalNet
+) -> tuple[dict[str, list[dict[str, Any]]], dict[str, Any]]:
+    if not exact_start(start):
+        raise ValueError("exact start record required")
+    current = _copy_state(state)
+    same_id = [item for item in current["starts"] if item["attempt_id"] == start["attempt_id"]]
+    facts = {"EXACT_START"}
+    if not same_id:
+        facts.add("FRESH_ID")
+    elif start in same_id:
+        facts.add("EXACT_START_REPLAY")
+    else:
+        facts.add("START_CONFLICT")
+    candidates = [
+        item
+        for item in net.transitions
+        if item.symbol in {"START-FRESH", "START-REPLAY", "REJECT-START-CONFLICT"}
+        and set(item.requirements) <= facts
+    ]
+    require(len(candidates) == 1, f"start causal classification not singular: {facts!r}")
+    transition = candidates[0]
+    if "ADD_START" in transition.effects:
+        current["starts"].append(deepcopy(start))
+    else:
+        require("PRESERVE_STATE" in transition.effects, f"{transition.symbol}: unsupported effect")
+    return current, _result(transition)
+
+
+def causal_end(
+    state: dict[str, list[dict[str, Any]]], terminal: dict[str, Any], net: CausalNet
+) -> tuple[dict[str, list[dict[str, Any]]], dict[str, Any]]:
+    if not exact_terminal(terminal):
+        raise ValueError("exact terminal record required")
+    current = _copy_state(state)
+    same_terminal_id = [
+        item for item in current["terminals"] if item["attempt_id"] == terminal["attempt_id"]
+    ]
+    matching_start = any(
+        item["attempt_id"] == terminal["attempt_id"]
+        and item["attempt_digest"] == terminal["attempt_digest"]
+        for item in current["starts"]
+    )
+    facts = {"EXACT_TERMINAL"}
+    if terminal in same_terminal_id:
+        facts.add("EXACT_TERMINAL_REPLAY")
+    elif same_terminal_id:
+        facts.add("TERMINAL_CONFLICT")
+    elif matching_start:
+        facts.update({"EXACT_RUNNING", "FRESH_TERMINAL"})
+        facts.add("KIND_RESULT" if terminal["terminal_kind"] == "RESULT" else "KIND_NO_RESULT")
+    else:
+        facts.update({"NO_TERMINAL_FOR_ID", "NOT_EXACT_RUNNING"})
+    end_symbols = {
+        "END-RESULT",
+        "END-NO-RESULT",
+        "END-REPLAY",
+        "REJECT-END-CONFLICT",
+        "REJECT-END-NOT-RUNNING",
+    }
+    candidates = [
+        item
+        for item in net.transitions
+        if item.symbol in end_symbols and set(item.requirements) <= facts
+    ]
+    require(len(candidates) == 1, f"end causal classification not singular: {facts!r}")
+    transition = candidates[0]
+    if "ADD_TERMINAL" in transition.effects:
+        current["terminals"].append(deepcopy(terminal))
+    else:
+        require("PRESERVE_STATE" in transition.effects, f"{transition.symbol}: unsupported effect")
+    return current, _result(transition)
+
+
+def main() -> int:
+    check_causal_bindings()
+    print("ALPHA4_RUNTIME_CAUSAL_COMPONENTS=8/8 PASS")
+    print("ALPHA4_RUNTIME_CAUSAL_SEMANTIC_PRECEDENCE=NONE")
+    print("ALPHA4_RUNTIME_CAUSAL_SEED_ACTION=STUTTER")
+    print("ALPHA4_RUNTIME_CAUSAL_EXPRESSION=PASS")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
