@@ -112,6 +112,19 @@ def main() -> int:
         print("ALPHA4_RUNTIME_RELEASE_GATE=FAIL")
         return 1
 
+    public_audit = [
+        python,
+        "-m",
+        "tools.alpha4_runtime_public_release_audit",
+        "--release-root",
+        str(release_root),
+        "--profiles-root",
+        str(profiles_root),
+    ]
+    if run(public_audit):
+        print("ALPHA4_RUNTIME_RELEASE_GATE=FAIL")
+        return 1
+
     print("ALPHA4_RUNTIME_RELEASE_GATE=PASS")
     return 0
 

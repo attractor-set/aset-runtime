@@ -1,12 +1,12 @@
 cff-version: 1.2.0
-message: If you use ASET Runtime, cite the exact verified release.
-title: ASET Runtime
+message: "If you use ASET Runtime, cite the exact verified release."
+title: "ASET Runtime"
 type: software
-abstract: ASET Runtime is the minimal exact productive-attempt lifecycle extension for ASET Seed.
+abstract: "ASET Runtime is the bounded execution lifecycle extension for ASET Seed 0.4alpha."
 authors:
-  - family-names: Prychyna
-    given-names: Dzmitry
-    alias: Attractor Set
+  - family-names: "Prychyna"
+    given-names: "Dzmitry"
+    alias: "Attractor Set"
 version: "0.1.0-alpha.4"
 license: Apache-2.0
-repository-code: https://github.com/attractor-set/aset-runtime
+repository-code: "https://github.com/attractor-set/aset-runtime"

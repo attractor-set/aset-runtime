@@ -106,3 +106,4 @@ jobs:
             dist/runtime-release-assembled-tlaps-evidence.json
             dist/runtime-python-airgap-evidence.json
             dist/runtime-release-admission-certificate.json
+            dist/runtime-public-release-audit.json

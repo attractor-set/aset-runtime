@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
+from tools.alpha4_runtime_public_release_audit import check_public_root
 from tools.alpha4_runtime_release_profiles import (
     manifest_records,
     parse_english,
@@ -73,3 +74,11 @@ def test_post_build_verifier_binds_all_exact_seed_preservation_operators() -> No
     assert "ExactSeedPreservation(s, t, e)" in source
     assert "t = s" in source
     assert "t.recognition = s.recognition" in source
+
+
+def test_public_root_matches_runtime_identity() -> None:
+    identity = check_public_root()
+    assert identity["project"] == "ASET Runtime"
+    assert identity["representation_id"] == "0.1.0-alpha.4"
+    assert identity["subject_id"] == "ASET-RUNTIME-ALPHA4"
+    assert identity["repository"] == "https://github.com/attractor-set/aset-runtime"

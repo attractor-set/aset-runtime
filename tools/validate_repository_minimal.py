@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import subprocess
 from pathlib import Path
 
@@ -45,6 +46,7 @@ ALLOWED_ACTIVE_PATHS = {
     "tools/alpha4_runtime_expression_airgap.py",
     "tools/alpha4_runtime_gate.py",
     "tools/alpha4_runtime_paired_expression.py",
+    "tools/alpha4_runtime_public_release_audit.py",
     "tools/alpha4_runtime_release_admission.py",
     "tools/alpha4_runtime_release_gate.py",
     "tools/alpha4_runtime_release_profiles.py",
@@ -157,21 +159,48 @@ def validate_verification_surface() -> None:
 
 
 def validate_attribution() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    require(readme.startswith("# ASET Runtime\n"), "README Runtime identity drift")
+    normalized_readme = " ".join(readme.split())
+    require(
+        "bounded execution lifecycle extension for ASET Seed 0.4alpha" in normalized_readme,
+        "README Runtime role drift",
+    )
+    require(
+        "Execution may produce material. Recognition remains local to Seed." in readme,
+        "README recognition boundary drift",
+    )
+
     notice = (ROOT / "NOTICE").read_text(encoding="utf-8")
+    require(notice.startswith("ASET Runtime\n"), "NOTICE Runtime identity drift")
     require("Copyright 2026 Dzmitry Prychyna" in notice, "copyright notice drift")
+    require("Attractor Set" in notice, "public author identity missing")
     require(
         "Original author and copyright holder: Dzmitry Prychyna." in notice,
         "original authorship notice missing",
     )
-    citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
     require(
-        "family-names: Prychyna" in citation and "given-names: Dzmitry" in citation,
-        "citation authorship drift",
+        "Licensed under the Apache License, Version 2.0." in notice,
+        "NOTICE license declaration missing",
     )
-    require('version: "0.1.0-alpha.4"' in citation, "citation version drift")
+
+    citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
+    for required in (
+        'title: "ASET Runtime"',
+        'version: "0.1.0-alpha.4"',
+        'family-names: "Prychyna"',
+        'given-names: "Dzmitry"',
+        'alias: "Attractor Set"',
+        'repository-code: "https://github.com/attractor-set/aset-runtime"',
+        "license: Apache-2.0",
+    ):
+        require(required in citation, f"citation attribution drift: {required}")
+
+    license_bytes = (ROOT / "LICENSE").read_bytes()
+    license_sha256 = hashlib.sha256(license_bytes).hexdigest()
     require(
-        "repository-code: https://github.com/attractor-set/aset-runtime" in citation,
-        "Runtime repository identity drift",
+        license_sha256 == "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "Apache-2.0 license byte identity drift",
     )
 
 
