@@ -158,4 +158,88 @@ def test_runtime_airgap_executes_generated_companion_under_restricted_runtime(
     assert evidence["cases"]["grand_total"] == 7265
     assert evidence["companion_import_surface"] == "RESTRICTED"
     assert evidence["companion_file_access"] == "MATERIALIZED_PROFILE_TREE_READ_ONLY"
+    assert evidence["companion_dynamic_builtins"] == "DENIED"
+    assert evidence["companion_filesystem_method_aliasing"] == "DENIED"
+    assert evidence["companion_seed_loader_exec"] == "EXACT_SEED_BASE_BYTES_ONLY"
+    assert evidence["runtime_capability_isolation"] == "PASS"
+    assert evidence["process_isolation"] == "NOT_CLAIMED"
     assert evidence["status"] == "PASS"
+
+
+def test_runtime_airgap_rejects_bound_filesystem_capability_alias() -> None:
+    import pytest
+
+    from tools.alpha4_runtime_expression_airgap import (
+        AirgapError,
+        _validate_companion_ast,
+    )
+
+    source = "from pathlib import Path\nprobe = Path('.').iterdir\n"
+    with pytest.raises(
+        AirgapError,
+        match="filesystem inspection forbidden",
+    ):
+        _validate_companion_ast(
+            source,
+            allowed_imports=frozenset({"pathlib"}),
+            allow_seed_loader=False,
+        )
+
+
+def test_runtime_airgap_denies_aliased_dynamic_builtin_at_runtime(
+    tmp_path,
+) -> None:
+    import pytest
+
+    from tools.alpha4_runtime_expression_airgap import (
+        AirgapError,
+        _load_expression,
+    )
+
+    subject = tmp_path / "runtime-subject.py"
+    subject.write_text(
+        "capability = getattr\ncapability((), 'missing')\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        AirgapError,
+        match="forbidden runtime capability",
+    ):
+        _load_expression(
+            subject,
+            tmp_path,
+            allowed_imports=frozenset(),
+            allow_seed_loader=False,
+        )
+
+
+def test_runtime_airgap_denies_arbitrary_compile_exec_alias(
+    tmp_path,
+) -> None:
+    import pytest
+
+    from tools.alpha4_runtime_expression_airgap import (
+        AirgapError,
+        _load_expression,
+    )
+
+    subject = tmp_path / "runtime-compile-subject.py"
+    subject.write_text(
+        "compiler = compile\n"
+        "executor = exec\n"
+        "code = compiler('VALUE = 1\\n', 'not-seed.py', 'exec')\n"
+        "executor(code)\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        AirgapError,
+        match="compile path is not exact Seed base",
+    ):
+        _load_expression(
+            subject,
+            tmp_path,
+            allowed_imports=frozenset(),
+            allow_seed_loader=True,
+        )

@@ -171,7 +171,11 @@ def check_public_release(
         and python_airgap.get("structural_cases") == 7260
         and python_airgap.get("identity_sensitivity_cases") == 5
         and python_airgap.get("grand_total_cases") == 7265
-        and python_airgap.get("runtime_isolation") == "PASS",
+        and python_airgap.get("runtime_capability_isolation") == "PASS"
+        and python_airgap.get("process_isolation") == "NOT_CLAIMED"
+        and python_airgap.get("dynamic_builtins") == "DENIED"
+        and python_airgap.get("filesystem_method_aliasing") == "DENIED"
+        and python_airgap.get("seed_loader_exec") == "EXACT_SEED_BASE_BYTES_ONLY",
         "Python air-gap public evidence invalid",
     )
     require(certificate.get("archive_binding") == "EXACT", "archive binding is not exact")

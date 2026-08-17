@@ -229,9 +229,7 @@ def print_evidence(evidence: dict[str, object]) -> None:
         "ALPHA4_RUNTIME_RELATIONAL_SOURCE_DERIVATIONS="
         f"{relational_derivations}/{relational_derivations} PASS"
     )
-    print(
-        f"ALPHA4_RUNTIME_INTERFACE_VALIDATOR_INDEPENDENCE={validator_cases}/{validator_cases} PASS"
-    )
+    print(f"ALPHA4_RUNTIME_INTERFACE_VALIDATOR_CROSSCHECK={validator_cases}/{validator_cases} PASS")
     print(f"ALPHA4_RUNTIME_IDENTITY_FIELD_SENSITIVITY={sensitivity}/{sensitivity} PASS")
     print(f"ALPHA4_RUNTIME_EVIDENCE_SET_ORDER_INVARIANCE={evidence_set}/{evidence_set} PASS")
     print("ALPHA4_RUNTIME_REPRESENTATION_SOURCE_INDEPENDENCE=PASS")
