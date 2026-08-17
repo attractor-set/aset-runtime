@@ -168,8 +168,10 @@ def check_public_release(
     require(
         isinstance(python_airgap, dict)
         and python_airgap.get("status") == "PASS"
-        and isinstance(python_airgap.get("cases"), int)
-        and python_airgap["cases"] > 0,
+        and python_airgap.get("structural_cases") == 7260
+        and python_airgap.get("identity_sensitivity_cases") == 5
+        and python_airgap.get("grand_total_cases") == 7265
+        and python_airgap.get("runtime_isolation") == "PASS",
         "Python air-gap public evidence invalid",
     )
     require(certificate.get("archive_binding") == "EXACT", "archive binding is not exact")

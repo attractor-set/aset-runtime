@@ -24,7 +24,11 @@ from tools.alpha4_runtime_paired_expression import (
     relational_end,
     relational_start,
 )
-from tools.alpha4_runtime_relational_expression import validate_runtime_relational_source
+from tools.alpha4_runtime_relational_expression import (
+    relational_exact_start_from_source,
+    relational_exact_terminal_from_source,
+    validate_runtime_relational_source,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "runtime/alpha4/RUNTIME.aset"
@@ -62,24 +66,48 @@ def check_interface_validator_independence() -> int:
         "terminal_binding": "b",
         "evidence_bindings": ["e0", "e1"],
     }
-    cases = [
-        (exact_start(valid_start), causal_exact_start(valid_start), True),
-        (
-            exact_start({**valid_start, "extra": "x"}),
-            causal_exact_start({**valid_start, "extra": "x"}),
-            False,
-        ),
-        (exact_terminal(valid_terminal), causal_exact_terminal(valid_terminal), True),
-        (
-            exact_terminal({**valid_terminal, "evidence_bindings": ["e0", "e0"]}),
-            causal_exact_terminal({**valid_terminal, "evidence_bindings": ["e0", "e0"]}),
-            False,
-        ),
-    ]
-    for operational, causal, expected in cases:
-        if operational != expected or causal != expected:
-            raise RuntimeError("Runtime independent interface validators disagree with contract")
-    return len(cases)
+    start_cases: list[tuple[dict[str, object], bool]] = [(valid_start, True)]
+    for field in tuple(valid_start):
+        start_cases.append(
+            ({key: value for key, value in valid_start.items() if key != field}, False)
+        )
+    start_cases.append(({**valid_start, "extra": "x"}, False))
+    for field in tuple(valid_start):
+        start_cases.append(({**valid_start, field: ""}, False))
+    start_cases.append(({**valid_start, "runtime_binding": 1}, False))
+
+    terminal_cases: list[tuple[dict[str, object], bool]] = [(valid_terminal, True)]
+    for field in tuple(valid_terminal):
+        terminal_cases.append(
+            ({key: value for key, value in valid_terminal.items() if key != field}, False)
+        )
+    terminal_cases.extend(
+        [
+            ({**valid_terminal, "extra": "x"}, False),
+            ({**valid_terminal, "terminal_kind": "WRONG"}, False),
+            ({**valid_terminal, "attempt_id": ""}, False),
+            ({**valid_terminal, "attempt_digest": ""}, False),
+            ({**valid_terminal, "terminal_digest": ""}, False),
+            ({**valid_terminal, "terminal_binding": ""}, False),
+            ({**valid_terminal, "terminal_binding": 1}, False),
+            ({**valid_terminal, "evidence_bindings": ["e0", "e0"]}, False),
+            ({**valid_terminal, "evidence_bindings": "e0"}, False),
+            ({**valid_terminal, "evidence_bindings": ["e0", ""]}, False),
+        ]
+    )
+    for value, expected in start_cases:
+        operational = exact_start(value)
+        relational = relational_exact_start_from_source(value)
+        causal = causal_exact_start(value)
+        if operational != relational or relational != causal or causal != expected:
+            raise RuntimeError("Runtime start interface validators disagree with contract")
+    for value, expected in terminal_cases:
+        operational = exact_terminal(value)
+        relational = relational_exact_terminal_from_source(value)
+        causal = causal_exact_terminal(value)
+        if operational != relational or relational != causal or causal != expected:
+            raise RuntimeError("Runtime terminal interface validators disagree with contract")
+    return len(start_cases) + len(terminal_cases)
 
 
 def check_operational_causal_interface(net: CausalNet) -> tuple[int, int, int]:

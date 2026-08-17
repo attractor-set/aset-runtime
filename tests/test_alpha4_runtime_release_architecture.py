@@ -123,3 +123,39 @@ def test_generated_python_preserves_formal_evidence_set_identity(tmp_path: Path)
     assert next_runtime == current
     assert next_seed == seed
     assert result["code"] == "IDEMPOTENT_REPLAY"
+
+
+def test_runtime_airgap_executes_generated_companion_under_restricted_runtime(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from tools import alpha4_runtime_expression_airgap as airgap
+
+    profiles = tmp_path / "profiles"
+    base = profiles / "base/seed/python/aset_seed_alpha4.py"
+    runtime = profiles / "python/aset_runtime_alpha4.py"
+    base.parent.mkdir(parents=True)
+    runtime.parent.mkdir(parents=True)
+    base.write_text(
+        "def state(subject, authority, recognition='UNKNOWN', evidence=()):\n"
+        "    return {'subject': subject, 'authority': authority, "
+        "'recognition': recognition, 'evidence': tuple(evidence)}\n\n"
+        "def apply_component(current, component_id, **kwargs):\n"
+        "    return dict(current)\n",
+        encoding="utf-8",
+    )
+    digest = "sha256:" + hashlib.sha256(base.read_bytes()).hexdigest()
+    write_python(runtime, digest, manifest_records())
+
+    class Binding:
+        companions = {"PYTHON": ("base/seed/python/aset_seed_alpha4.py", digest)}
+
+    monkeypatch.setattr(airgap, "parse_seed_binding", Binding)
+    evidence = airgap.check_expression_airgap(profiles)
+    assert evidence["cases"]["start"] == 1452
+    assert evidence["cases"]["end"] == 5808
+    assert evidence["cases"]["total"] == 7260
+    assert evidence["cases"]["identity_sensitivity"] == 5
+    assert evidence["cases"]["grand_total"] == 7265
+    assert evidence["companion_import_surface"] == "RESTRICTED"
+    assert evidence["companion_file_access"] == "MATERIALIZED_PROFILE_TREE_READ_ONLY"
+    assert evidence["status"] == "PASS"

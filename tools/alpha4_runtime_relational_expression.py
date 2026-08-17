@@ -257,17 +257,33 @@ def _result(contract: RuntimeContract, rule: RuntimeRule) -> dict[str, Any]:
 
 
 def _exact_start(contract: RuntimeContract, value: dict[str, Any]) -> bool:
-    return set(value) == set(contract.start_fields)
+    fields = set(contract.start_fields)
+    return set(value) == fields and all(
+        isinstance(value[field], str) and value[field] for field in fields
+    )
 
 
 def _exact_terminal(contract: RuntimeContract, value: dict[str, Any]) -> bool:
-    if (
-        set(value) != set(contract.terminal_fields)
-        or value.get("terminal_kind") not in contract.terminal_kinds
-    ):
+    fields = set(contract.terminal_fields)
+    if set(value) != fields or value.get("terminal_kind") not in contract.terminal_kinds:
         return False
+    for field in fields - {"terminal_kind", "evidence_bindings"}:
+        if not isinstance(value[field], str) or not value[field]:
+            return False
     evidence = value.get("evidence_bindings")
-    return isinstance(evidence, list) and len(evidence) == len(set(evidence))
+    return (
+        isinstance(evidence, list)
+        and all(isinstance(item, str) and item for item in evidence)
+        and len(evidence) == len(set(evidence))
+    )
+
+
+def relational_exact_start_from_source(value: dict[str, Any], root: Path = ROOT) -> bool:
+    return _exact_start(derive_runtime_contract(root), value)
+
+
+def relational_exact_terminal_from_source(value: dict[str, Any], root: Path = ROOT) -> bool:
+    return _exact_terminal(derive_runtime_contract(root), value)
 
 
 def _terminal_equal(contract: RuntimeContract, left: dict[str, Any], right: dict[str, Any]) -> bool:

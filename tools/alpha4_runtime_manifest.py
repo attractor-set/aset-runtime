@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -201,6 +202,80 @@ EXPECTED_RELATIONS = (
 )
 
 
+def _strip_tla_comments(source: str) -> str:
+    out: list[str] = []
+    index = 0
+    block_depth = 0
+    in_string = False
+    while index < len(source):
+        if block_depth:
+            if source.startswith("(*", index):
+                block_depth += 1
+                index += 2
+            elif source.startswith("*)", index):
+                block_depth -= 1
+                index += 2
+            elif source[index] == "\n":
+                out.append("\n")
+                index += 1
+            else:
+                index += 1
+            continue
+
+        if in_string:
+            char = source[index]
+            out.append(char)
+            if char == "\\" and index + 1 < len(source):
+                out.append(source[index + 1])
+                index += 2
+            else:
+                if char == '"':
+                    in_string = False
+                index += 1
+            continue
+
+        if source.startswith("(*", index):
+            block_depth = 1
+            index += 2
+            continue
+        if source.startswith("\\*", index):
+            while index < len(source) and source[index] != "\n":
+                index += 1
+            continue
+        char = source[index]
+        out.append(char)
+        if char == '"':
+            in_string = True
+        index += 1
+
+    if block_depth:
+        raise ManifestError("unterminated TLA block comment in canonical scope")
+    if in_string:
+        raise ManifestError("unterminated TLA string in canonical scope")
+    return "".join(out)
+
+
+def _canonical_tla_scope_sha256(path: Path) -> str:
+    source = path.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n")
+    uncommented = _strip_tla_comments(source)
+    canonical = "\n".join(line.strip() for line in uncommented.splitlines() if line.strip())
+    return "sha256:" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+EXPECTED_RELATIONAL_SCOPE_SHA256 = (
+    "sha256:9908a323393ce02d08e8c4fc5d398611d23df07aba5497e53ff153aad3c7216d"
+)
+EXPECTED_FORMAL_REFLECTION_SCOPE_SHA256 = (
+    "sha256:635c0aaf93cd792d5caad314b434dd3ba76673f6f19b2133a8ca67e4300e6125"
+)
+EXPECTED_PROOF_SCOPE_SHA256 = {
+    "OPERATIONAL_RELATIONAL_PAIRING": (
+        "sha256:b7ff1f0337c949f242c110cd6b0191860d4fabdb81174e4a89653609e83f1f36"
+    ),
+    "SEED_BOUNDARY": ("sha256:ded37c5612ee835f8e8661519453ec5ef4d90a24b8926de6e3a9242cf451c928"),
+}
+
+
 def _theorem_present(path: Path, theorem: str) -> bool:
     text = path.read_text(encoding="utf-8")
     return f"THEOREM {theorem}" in text or f"{theorem} ==" in text
@@ -255,6 +330,22 @@ def parse_runtime_manifest(root: Path = ROOT) -> RuntimeBindingPlan:
     require(len({x.pairing_theorem for x in pairs}) == 8, "duplicate Runtime pairing theorem")
     for relative in (*sources.values(), *(p.module for p in proofs), *(p for _, p in derivers)):
         require((root / relative).is_file(), f"Runtime bound file missing: {relative}")
+    require(
+        _canonical_tla_scope_sha256(root / sources["RELATIONAL"])
+        == EXPECTED_RELATIONAL_SCOPE_SHA256,
+        "Runtime relational canonical scope drift",
+    )
+    require(
+        _canonical_tla_scope_sha256(root / sources["FORMAL-REFLECTION"])
+        == EXPECTED_FORMAL_REFLECTION_SCOPE_SHA256,
+        "Runtime formal reflection canonical scope drift",
+    )
+    for proof in proofs:
+        require(
+            _canonical_tla_scope_sha256(root / proof.module)
+            == EXPECTED_PROOF_SCOPE_SHA256[proof.proof_id],
+            f"Runtime proof canonical scope drift: {proof.proof_id}",
+        )
     relational_text = (root / sources["RELATIONAL"]).read_text(encoding="utf-8")
     reflection_text = (root / sources["FORMAL-REFLECTION"]).read_text(encoding="utf-8")
     proof_text = "\n".join((root / proof.module).read_text(encoding="utf-8") for proof in proofs)
@@ -294,6 +385,12 @@ def main() -> int:
         total = sum(item.expected_obligations for item in plan.proofs)
         print(f"ALPHA4_RUNTIME_MANIFEST_PAIRS={len(plan.pairs)}/{len(plan.pairs)} PASS")
         print(f"ALPHA4_RUNTIME_MANIFEST_PROOFS={len(plan.proofs)}/{len(plan.proofs)} PASS")
+        print("ALPHA4_RUNTIME_RELATIONAL_CANONICAL_SCOPE=1/1 PASS")
+        print("ALPHA4_RUNTIME_FORMAL_REFLECTION_CANONICAL_SCOPE=1/1 PASS")
+        print(
+            "ALPHA4_RUNTIME_PROOF_CANONICAL_SCOPES="
+            f"{len(EXPECTED_PROOF_SCOPE_SHA256)}/{len(EXPECTED_PROOF_SCOPE_SHA256)} PASS"
+        )
         print(f"ALPHA4_RUNTIME_MANIFEST_EXPECTED_TLAPS_OBLIGATIONS={total}")
         print("ALPHA4_RUNTIME_BINDING_PLAN=PASS")
         return 0
