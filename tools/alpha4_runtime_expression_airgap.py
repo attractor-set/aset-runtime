@@ -103,6 +103,19 @@ def _result(accepted: bool, code: str, changed: bool) -> dict[str, Any]:
     }
 
 
+def _terminal_equal(left: dict[str, Any], right: dict[str, Any]) -> bool:
+    scalar_fields = {
+        "attempt_id",
+        "attempt_digest",
+        "terminal_kind",
+        "terminal_digest",
+        "terminal_binding",
+    }
+    return all(left[field] == right[field] for field in scalar_fields) and set(
+        left["evidence_bindings"]
+    ) == set(right["evidence_bindings"])
+
+
 def _expected_start(
     state: dict[str, list[dict[str, Any]]], start: dict[str, Any]
 ) -> tuple[dict[str, list[dict[str, Any]]], dict[str, Any]]:
@@ -123,7 +136,7 @@ def _expected_end(
     same_id = [
         item for item in next_state["terminals"] if item["attempt_id"] == terminal["attempt_id"]
     ]
-    if terminal in same_id:
+    if any(_terminal_equal(item, terminal) for item in same_id):
         return next_state, _result(True, "IDEMPOTENT_REPLAY", False)
     if same_id:
         return next_state, _result(False, "TERMINAL_ATTEMPT_IMMUTABLE", False)
@@ -191,6 +204,34 @@ def check_expression_airgap(profiles_root: Path) -> dict[str, Any]:
                 require(actual_result == expected_result, "generated Runtime end result mismatch")
                 require(actual_seed == seed_state, "Runtime end changed exact Seed state")
                 end_checks += 1
+    set_order_checks = 0
+    set_start = {
+        "attempt_id": "set-a",
+        "attempt_digest": "set-d",
+        "runtime_binding": "runtime:set",
+        "descriptor_binding": "descriptor:set",
+    }
+    set_terminal = {
+        "attempt_id": "set-a",
+        "attempt_digest": "set-d",
+        "terminal_kind": "RESULT",
+        "terminal_digest": "set-t",
+        "terminal_binding": "terminal-binding:set",
+        "evidence_bindings": ["e0", "e1"],
+    }
+    set_state = {"starts": [deepcopy(set_start)], "terminals": [deepcopy(set_terminal)]}
+    reordered = {**set_terminal, "evidence_bindings": ["e1", "e0"]}
+    expected_state, expected_result = _expected_end(set_state, reordered)
+    actual_state, actual_seed, actual_result = namespace["end_attempt"](
+        deepcopy(set_state), deepcopy(reordered), deepcopy(seed_states[0])
+    )
+    require(actual_state == expected_state, "Runtime evidence-set replay state mismatch")
+    require(actual_result == expected_result, "Runtime evidence-set replay result mismatch")
+    require(actual_seed == seed_states[0], "Runtime evidence-set replay changed exact Seed state")
+    require(
+        actual_result["code"] == "IDEMPOTENT_REPLAY", "Runtime evidence-set order changed identity"
+    )
+    set_order_checks += 1
     require(
         tree_digest(profiles_root) == tree_before,
         "Runtime profile tree changed during air-gap verification",
@@ -209,6 +250,7 @@ def check_expression_airgap(profiles_root: Path) -> dict[str, Any]:
             "total": start_checks + end_checks,
         },
         "seed_states_checked": ["UNKNOWN", "ALLOW", "BLOCK"],
+        "evidence_set_order_checks": set_order_checks,
         "seed_projection": "STUTTER",
         "status": "PASS",
     }
@@ -232,6 +274,10 @@ def main() -> int:
         print(f"ALPHA4_RUNTIME_PYTHON_AIRGAP_START={cases['start']}/{cases['start']} PASS")
         print(f"ALPHA4_RUNTIME_PYTHON_AIRGAP_END={cases['end']}/{cases['end']} PASS")
         print(f"ALPHA4_RUNTIME_PYTHON_AIRGAP_TOTAL={cases['total']}/{cases['total']} PASS")
+        print(
+            "ALPHA4_RUNTIME_PYTHON_EVIDENCE_SET_ORDER="
+            f"{evidence['evidence_set_order_checks']}/{evidence['evidence_set_order_checks']} PASS"
+        )
         print("ALPHA4_RUNTIME_PYTHON_SEED_BASE=EXACT")
         print("ALPHA4_RUNTIME_PYTHON_SEED_PROJECTION=STUTTER")
         print("ALPHA4_RUNTIME_PYTHON_SEMANTIC_SOURCE_DEPENDENCY=NONE")

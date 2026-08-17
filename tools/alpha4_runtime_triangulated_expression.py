@@ -6,54 +6,80 @@ from tools.alpha4_runtime_causal_expression import (
     EXPECTED_CAUSAL_CONTRACTS,
     CausalNet,
     causal_end,
+    causal_exact_start,
+    causal_exact_terminal,
     causal_start,
     check_causal_bindings,
 )
+from tools.alpha4_runtime_manifest import parse_runtime_manifest
 from tools.alpha4_runtime_paired_expression import (
     EXPECTED_STACK_EFFECTS,
     bounded_domain,
+    exact_start,
+    exact_terminal,
+    field_sensitivity_check,
     operational_end,
     operational_start,
     parse_operational_words,
     relational_end,
     relational_start,
 )
+from tools.alpha4_runtime_relational_expression import validate_runtime_relational_source
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "runtime/alpha4/RUNTIME.aset"
 
 
-def _manifest_lines() -> list[str]:
-    return [
-        line.strip() for line in MANIFEST.read_text(encoding="utf-8").splitlines() if line.strip()
-    ]
-
-
 def check_representation_source_independence() -> dict[str, str]:
-    lines = _manifest_lines()
-    if "SEMANTIC-PRECEDENCE NONE" not in lines:
-        raise RuntimeError("Runtime semantic precedence drift")
-    for relation in (
-        "RELATION OPERATIONAL_INTERFACE EXACT_STACK_EFFECT_CONTRACT",
-        "RELATION CAUSAL_CONTRACT CLOSED_WORLD_REQUIREMENT_EFFECT_OUTPUT_CONTRACT",
-        "RELATION OPERATIONAL_CAUSAL_RESULT OBSERVABLE_RESULT_CODE_CONGRUENCE",
-    ):
-        if relation not in lines:
-            raise RuntimeError(f"Runtime assurance relation missing: {relation}")
-    sources: dict[str, str] = {}
-    for line in lines:
-        tokens = line.split()
-        if tokens[0] in {"OPERATIONAL", "RELATIONAL", "CAUSAL-MODEL"}:
-            sources[tokens[0]] = tokens[1]
-    expected = {"OPERATIONAL", "RELATIONAL", "CAUSAL-MODEL"}
-    if set(sources) != expected:
-        raise RuntimeError(f"three-way Runtime source binding incomplete: {sources!r}")
+    plan = parse_runtime_manifest(ROOT)
+    sources = {
+        "OPERATIONAL": plan.operational,
+        "RELATIONAL": plan.relational,
+        "CAUSAL-MODEL": plan.causal_model,
+    }
     if len(set(sources.values())) != 3:
         raise RuntimeError(f"Runtime assurance representations share a source path: {sources!r}")
+    if plan.relation_map().get("RELATIONAL_SOURCE") != "BOUND_TLA_OPERATOR_DERIVATION":
+        raise RuntimeError("Runtime relational source derivation binding missing")
     for source in sources.values():
         if not (ROOT / source).is_file():
             raise RuntimeError(f"bound Runtime assurance source missing: {source}")
     return sources
+
+
+def check_interface_validator_independence() -> int:
+    valid_start = {
+        "attempt_id": "a",
+        "attempt_digest": "d",
+        "runtime_binding": "r",
+        "descriptor_binding": "q",
+    }
+    valid_terminal = {
+        "attempt_id": "a",
+        "attempt_digest": "d",
+        "terminal_kind": "RESULT",
+        "terminal_digest": "t",
+        "terminal_binding": "b",
+        "evidence_bindings": ["e0", "e1"],
+    }
+    cases = [
+        (exact_start(valid_start), causal_exact_start(valid_start), True),
+        (
+            exact_start({**valid_start, "extra": "x"}),
+            causal_exact_start({**valid_start, "extra": "x"}),
+            False,
+        ),
+        (exact_terminal(valid_terminal), causal_exact_terminal(valid_terminal), True),
+        (
+            exact_terminal({**valid_terminal, "evidence_bindings": ["e0", "e0"]}),
+            causal_exact_terminal({**valid_terminal, "evidence_bindings": ["e0", "e0"]}),
+            False,
+        ),
+    ]
+    for operational, causal, expected in cases:
+        if operational != expected or causal != expected:
+            raise RuntimeError("Runtime independent interface validators disagree with contract")
+    return len(cases)
 
 
 def check_operational_causal_interface(net: CausalNet) -> tuple[int, int, int]:
@@ -73,8 +99,11 @@ def check_operational_causal_interface(net: CausalNet) -> tuple[int, int, int]:
 
 def check_triangulated_assurance() -> dict[str, object]:
     sources = check_representation_source_independence()
+    relational_derivations = validate_runtime_relational_source(ROOT)
+    validator_cases = check_interface_validator_independence()
     net = check_causal_bindings()
     stack_contracts, causal_contracts, result_bindings = check_operational_causal_interface(net)
+    sensitivity = field_sensitivity_check()
     starts, terminals, states = bounded_domain()
     start_checks = 0
     end_checks = 0
@@ -128,6 +157,10 @@ def check_triangulated_assurance() -> dict[str, object]:
         "operational_stack_contracts": stack_contracts,
         "causal_closed_world_contracts": causal_contracts,
         "operational_causal_result_code_bindings": result_bindings,
+        "relational_source_derivations": relational_derivations,
+        "interface_validator_cases": validator_cases,
+        "identity_field_sensitivity": sensitivity["total"],
+        "evidence_set_order_invariance": sensitivity["evidence_set"],
         "start_checks": start_checks,
         "end_checks": end_checks,
         "total_checks": total_checks,
@@ -145,6 +178,10 @@ def print_evidence(evidence: dict[str, object]) -> None:
     stacks = int(evidence["operational_stack_contracts"])
     causal_contracts = int(evidence["causal_closed_world_contracts"])
     result_bindings = int(evidence["operational_causal_result_code_bindings"])
+    relational_derivations = int(evidence["relational_source_derivations"])
+    validator_cases = int(evidence["interface_validator_cases"])
+    sensitivity = int(evidence["identity_field_sensitivity"])
+    evidence_set = int(evidence["evidence_set_order_invariance"])
     print("ALPHA4_RUNTIME_ASSURANCE_REPRESENTATIONS=OPERATIONAL,RELATIONAL,CAUSAL")
     print("ALPHA4_RUNTIME_ASSURANCE_SEMANTIC_PRECEDENCE=NONE")
     print(f"ALPHA4_RUNTIME_OPERATIONAL_RELATIONAL_CONGRUENCE={total}/{total} PASS")
@@ -160,6 +197,15 @@ def print_evidence(evidence: dict[str, object]) -> None:
     print(
         f"ALPHA4_RUNTIME_OPERATIONAL_CAUSAL_RESULT_CODES={result_bindings}/{result_bindings} PASS"
     )
+    print(
+        "ALPHA4_RUNTIME_RELATIONAL_SOURCE_DERIVATIONS="
+        f"{relational_derivations}/{relational_derivations} PASS"
+    )
+    print(
+        f"ALPHA4_RUNTIME_INTERFACE_VALIDATOR_INDEPENDENCE={validator_cases}/{validator_cases} PASS"
+    )
+    print(f"ALPHA4_RUNTIME_IDENTITY_FIELD_SENSITIVITY={sensitivity}/{sensitivity} PASS")
+    print(f"ALPHA4_RUNTIME_EVIDENCE_SET_ORDER_INVARIANCE={evidence_set}/{evidence_set} PASS")
     print("ALPHA4_RUNTIME_REPRESENTATION_SOURCE_INDEPENDENCE=PASS")
     print("ALPHA4_RUNTIME_TRIANGULATED_SEED_ACTION=STUTTER")
     print("ALPHA4_RUNTIME_TRIANGULATED_EXPRESSION=PASS")

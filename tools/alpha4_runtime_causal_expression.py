@@ -5,11 +5,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from tools.alpha4_runtime_paired_expression import exact_start, exact_terminal
+from tools.alpha4_runtime_manifest import parse_runtime_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
 CAUSAL = ROOT / "runtime/alpha4/causal/components.petri"
-MANIFEST = ROOT / "runtime/alpha4/RUNTIME.aset"
 
 
 class CausalExpressionError(RuntimeError):
@@ -142,6 +141,50 @@ EXPECTED_CAUSAL_CONTRACTS: dict[str, tuple[str, frozenset[str], frozenset[str], 
 }
 
 
+CAUSAL_START_FIELDS = {"attempt_id", "attempt_digest", "runtime_binding", "descriptor_binding"}
+CAUSAL_TERMINAL_FIELDS = {
+    "attempt_id",
+    "attempt_digest",
+    "terminal_kind",
+    "terminal_digest",
+    "terminal_binding",
+    "evidence_bindings",
+}
+CAUSAL_TERMINAL_KINDS = {"RESULT", "NO_RESULT"}
+
+
+def causal_exact_start(value: dict[str, Any]) -> bool:
+    return set(value) == CAUSAL_START_FIELDS and all(
+        isinstance(value[field], str) and value[field] for field in CAUSAL_START_FIELDS
+    )
+
+
+def causal_exact_terminal(value: dict[str, Any]) -> bool:
+    if (
+        set(value) != CAUSAL_TERMINAL_FIELDS
+        or value.get("terminal_kind") not in CAUSAL_TERMINAL_KINDS
+    ):
+        return False
+    for field in CAUSAL_TERMINAL_FIELDS - {"terminal_kind", "evidence_bindings"}:
+        if not isinstance(value[field], str) or not value[field]:
+            return False
+    evidence = value.get("evidence_bindings")
+    return (
+        isinstance(evidence, list)
+        and all(isinstance(item, str) and item for item in evidence)
+        and len(evidence) == len(set(evidence))
+    )
+
+
+def causal_terminal_equal(left: dict[str, Any], right: dict[str, Any]) -> bool:
+    if not causal_exact_terminal(left) or not causal_exact_terminal(right):
+        return False
+    scalar_fields = CAUSAL_TERMINAL_FIELDS - {"evidence_bindings"}
+    return all(left[field] == right[field] for field in scalar_fields) and set(
+        left["evidence_bindings"]
+    ) == set(right["evidence_bindings"])
+
+
 def validate_causal_contract(net: CausalNet) -> int:
     actual = {item.symbol: item for item in net.transitions}
     require(
@@ -242,21 +285,16 @@ def parse_causal_net(path: Path = CAUSAL) -> CausalNet:
     return CausalNet(1, "ASET-RUNTIME-ALPHA4-CAUSAL", semantic_precedence, mode, tuple(transitions))
 
 
-def manifest_bindings() -> dict[str, str]:
-    result: dict[str, str] = {}
-    for line in _lines(MANIFEST):
-        parts = line.split()
-        if parts[0] == "CAUSAL-BIND":
-            require(len(parts) == 3, f"invalid CAUSAL-BIND: {line}")
-            result[parts[1]] = parts[2]
-    require(len(result) == 8, "Runtime causal manifest bindings must contain eight entries")
-    return result
+def manifest_bindings(root: Path = ROOT) -> dict[str, str]:
+    plan = parse_runtime_manifest(root)
+    return {item.component_id: item.causal_transition for item in plan.causal_bindings}
 
 
-def check_causal_bindings() -> CausalNet:
-    net = parse_causal_net()
+def check_causal_bindings(root: Path = ROOT) -> CausalNet:
+    plan = parse_runtime_manifest(root)
+    net = parse_causal_net(root / plan.causal_model)
     actual = {item.component_id: item.symbol for item in net.transitions}
-    require(actual == manifest_bindings(), "causal component binding mismatch")
+    require(actual == manifest_bindings(root), "causal component binding mismatch")
     validate_causal_contract(net)
     for transition in net.transitions:
         outputs = transition.output_map()
@@ -290,7 +328,7 @@ def _result(transition: CausalTransition) -> dict[str, Any]:
 def causal_start(
     state: dict[str, list[dict[str, Any]]], start: dict[str, Any], net: CausalNet
 ) -> tuple[dict[str, list[dict[str, Any]]], dict[str, Any]]:
-    if not exact_start(start):
+    if not causal_exact_start(start):
         raise ValueError("exact start record required")
     current = _copy_state(state)
     same_id = [item for item in current["starts"] if item["attempt_id"] == start["attempt_id"]]
@@ -319,7 +357,7 @@ def causal_start(
 def causal_end(
     state: dict[str, list[dict[str, Any]]], terminal: dict[str, Any], net: CausalNet
 ) -> tuple[dict[str, list[dict[str, Any]]], dict[str, Any]]:
-    if not exact_terminal(terminal):
+    if not causal_exact_terminal(terminal):
         raise ValueError("exact terminal record required")
     current = _copy_state(state)
     same_terminal_id = [
@@ -331,7 +369,7 @@ def causal_end(
         for item in current["starts"]
     )
     facts = {"EXACT_TERMINAL"}
-    if terminal in same_terminal_id:
+    if any(causal_terminal_equal(item, terminal) for item in same_terminal_id):
         facts.add("EXACT_TERMINAL_REPLAY")
     elif same_terminal_id:
         facts.add("TERMINAL_CONFLICT")
