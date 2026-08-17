@@ -122,7 +122,7 @@ from copy import deepcopy
 from pathlib import Path
 BASE_SEED_EXPRESSION_SHA256 = {seed_python_sha256!r}
 BASE_SEED_EXPRESSION_PATH = (
-    Path(__file__).resolve().parents[1]
+    Path(__file__).parent.parent
     / "base"
     / "seed"
     / "python"

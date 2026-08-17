@@ -39,7 +39,7 @@ def test_three_way_assurance_covers_complete_bounded_domain() -> None:
     assert evidence["causal_closed_world_contracts"] == 8
     assert evidence["operational_causal_result_code_bindings"] == 8
     assert evidence["relational_source_derivations"] == 8
-    assert evidence["interface_validator_cases"] == 4
+    assert evidence["interface_validator_cases"] == 28
     assert evidence["identity_field_sensitivity"] == 5
     assert evidence["evidence_set_order_invariance"] == 1
     assert evidence["pairwise_relations"] == {
@@ -92,7 +92,7 @@ def test_runtime_causal_output_surface_rejects_wrong_result_code(tmp_path: Path)
 def test_relational_source_derivation_and_identity_sensitivity_are_first_class() -> None:
     evidence = check_triangulated_assurance()
     assert evidence["relational_source_derivations"] == 8
-    assert evidence["interface_validator_cases"] == 4
+    assert evidence["interface_validator_cases"] == 28
     assert evidence["identity_field_sensitivity"] == 5
     assert evidence["evidence_set_order_invariance"] == 1
 
@@ -148,7 +148,7 @@ def test_bound_runtime_tla_replay_mutation_breaks_gate(tmp_path: Path) -> None:
     )
     status, output = _run_gate(repo)
     assert status != 0
-    assert "mismatch" in output.lower() or "sensitivity" in output.lower()
+    assert "relational canonical scope drift" in output.lower()
 
 
 def test_runtime_manifest_duplicate_precedence_breaks_gate(tmp_path: Path) -> None:
@@ -220,3 +220,120 @@ def test_runtime_tlaps_runner_rejects_reduced_proof_scope(tmp_path: Path) -> Non
     )
     assert result.returncode != 0
     assert "SCOPE_DRIFT" in result.stdout
+
+
+def test_runtime_relational_and_proof_scopes_are_closed_world(tmp_path: Path) -> None:
+    from tools.alpha4_runtime_manifest import ManifestError, parse_runtime_manifest
+
+    repo = _copy_repo(tmp_path / "relational")
+    relational = repo / "runtime/alpha4/formal/RuntimeRelations.tla"
+    text = relational.read_text(encoding="utf-8")
+    marker = "ExactStartReplay(s, start) == start \\in s.starts"
+    assert marker in text
+    relational.write_text(text.replace(marker, marker + " /\\ FALSE", 1), encoding="utf-8")
+    with pytest.raises(ManifestError, match="relational canonical scope drift"):
+        parse_runtime_manifest(repo)
+
+    repo = _copy_repo(tmp_path / "proof")
+    proof = repo / "runtime/alpha4/formal/OperationalRelationalPairingProofs.tla"
+    text = proof.read_text(encoding="utf-8")
+    marker = "THEOREM StartFreshPairing =="
+    assert marker in text
+    proof.write_text(text.replace(marker, marker + "\n  /\\ TRUE", 1), encoding="utf-8")
+    with pytest.raises(ManifestError, match="proof canonical scope drift"):
+        parse_runtime_manifest(repo)
+
+
+def test_runtime_airgap_rejects_repository_semantic_import() -> None:
+    from tools.alpha4_runtime_expression_airgap import AirgapError, _validate_companion_ast
+
+    source = "from tools.alpha4_runtime_relational_expression import derive_runtime_contract\n"
+    with pytest.raises(AirgapError, match="import forbidden"):
+        _validate_companion_ast(
+            source,
+            allowed_imports=frozenset({"hashlib", "copy", "pathlib"}),
+            allow_seed_loader=True,
+        )
+
+
+def test_runtime_airgap_rejects_import_smuggling_and_object_traversal() -> None:
+    from tools.alpha4_runtime_expression_airgap import AirgapError, _validate_companion_ast
+
+    with pytest.raises(AirgapError, match="import forbidden"):
+        _validate_companion_ast(
+            "from pathlib import os\n",
+            allowed_imports=frozenset({"hashlib", "copy", "pathlib"}),
+            allow_seed_loader=True,
+        )
+
+    with pytest.raises(AirgapError, match="private attribute forbidden"):
+        _validate_companion_ast(
+            "value = ().__class__\n",
+            allowed_imports=frozenset({"hashlib", "copy", "pathlib"}),
+            allow_seed_loader=True,
+        )
+
+
+def test_runtime_release_sensitivity_rejects_ignored_start_binding() -> None:
+    from copy import deepcopy
+
+    from tools.alpha4_runtime_expression_airgap import AirgapError, _check_identity_sensitivity
+
+    def buggy_start(current, start, seed_state):
+        next_state = deepcopy(current)
+        same = [
+            item
+            for item in next_state["starts"]
+            if item["attempt_id"] == start["attempt_id"]
+            and item["attempt_digest"] == start["attempt_digest"]
+        ]
+        if same:
+            result = {
+                "accepted": True,
+                "code": "IDEMPOTENT_REPLAY",
+                "state_changed": False,
+                "seed_projection": {"action": "STUTTER", "effect_permitted": False},
+            }
+        else:
+            next_state["starts"].append(deepcopy(start))
+            result = {
+                "accepted": True,
+                "code": "ATTEMPT_STARTED",
+                "state_changed": True,
+                "seed_projection": {"action": "STUTTER", "effect_permitted": False},
+            }
+        return next_state, deepcopy(seed_state), result
+
+    namespace = {"start_attempt": buggy_start, "end_attempt": lambda *args: args}
+    seed_state = {"subject": "s", "authority": "a", "recognition": "UNKNOWN", "evidence": ()}
+    with pytest.raises(AirgapError, match="start identity sensitivity"):
+        _check_identity_sensitivity(namespace, seed_state)
+
+
+def test_runtime_formal_reflection_scope_is_closed_world(tmp_path: Path) -> None:
+    from tools.alpha4_runtime_manifest import ManifestError, parse_runtime_manifest
+
+    repo = _copy_repo(tmp_path)
+    reflection = repo / "runtime/alpha4/formal/RestrictedOperationalSemantics.tla"
+    text = reflection.read_text(encoding="utf-8")
+    marker = "OperationalStartFresh(s, t, start, result) =="
+    assert marker in text
+    reflection.write_text(text.replace(marker, marker + "\n  /\\ TRUE", 1), encoding="utf-8")
+    with pytest.raises(ManifestError, match="formal reflection canonical scope drift"):
+        parse_runtime_manifest(repo)
+
+
+def test_runtime_tla_scope_preserves_comment_tokens_inside_strings(tmp_path: Path) -> None:
+    from tools.alpha4_runtime_manifest import ManifestError, parse_runtime_manifest
+
+    repo = _copy_repo(tmp_path)
+    relational = repo / "runtime/alpha4/formal/RuntimeRelations.tla"
+    text = relational.read_text(encoding="utf-8")
+    marker = 'result = "ATTEMPT_STARTED"'
+    assert marker in text
+    relational.write_text(
+        text.replace(marker, 'result = "ATTEMPT_STARTED(*scope-drift*)"', 1),
+        encoding="utf-8",
+    )
+    with pytest.raises(ManifestError, match="relational canonical scope drift"):
+        parse_runtime_manifest(repo)

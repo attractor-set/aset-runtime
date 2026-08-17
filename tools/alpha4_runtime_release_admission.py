@@ -102,6 +102,21 @@ def check_release_admission(
     )
     require(airgap["seed_base"]["status"] == "EXACT", "Python air-gap Seed base not exact")
     require(airgap["seed_projection"] == "STUTTER", "Python air-gap Seed projection drift")
+    cases = airgap.get("cases")
+    require(
+        isinstance(cases, dict)
+        and cases.get("total") == 7260
+        and cases.get("identity_sensitivity") == 5
+        and cases.get("grand_total") == 7265,
+        "Runtime Python air-gap sensitivity coverage drift",
+    )
+    require(
+        airgap.get("semantic_source_runtime_dependency") == "NONE"
+        and airgap.get("generator_runtime_dependency") == "NONE"
+        and airgap.get("companion_import_surface") == "RESTRICTED"
+        and airgap.get("companion_file_access") == "MATERIALIZED_PROFILE_TREE_READ_ONLY",
+        "Runtime Python air-gap independence boundary drift",
+    )
 
     seed_english = profiles_root / "base/seed/en/Seed.md"
     seed_python = profiles_root / "base/seed/python/aset_seed_alpha4.py"
@@ -146,7 +161,10 @@ def check_release_admission(
         "python_seed_base": "EXACT",
         "python_airgap": {
             "status": "PASS",
-            "cases": airgap["cases"]["total"],
+            "structural_cases": airgap["cases"]["total"],
+            "identity_sensitivity_cases": airgap["cases"]["identity_sensitivity"],
+            "grand_total_cases": airgap["cases"]["grand_total"],
+            "runtime_isolation": "PASS",
         },
         "release": {
             "tree_digest": release_tree,
@@ -209,8 +227,11 @@ def main() -> int:
         print("ALPHA4_RUNTIME_RELEASE_ADMISSION_POST_BUILD_TLAPS=PASS")
         print("ALPHA4_RUNTIME_RELEASE_ADMISSION_ENGLISH_SEED_BASE=EXACT")
         print("ALPHA4_RUNTIME_RELEASE_ADMISSION_PYTHON_SEED_BASE=EXACT")
-        cases = certificate["python_airgap"]["cases"]
+        cases = certificate["python_airgap"]["structural_cases"]
         print(f"ALPHA4_RUNTIME_RELEASE_ADMISSION_PYTHON_AIRGAP={cases}/{cases} PASS")
+        print("ALPHA4_RUNTIME_RELEASE_ADMISSION_PYTHON_AIRGAP_IDENTITY_SENSITIVITY=5/5 PASS")
+        print("ALPHA4_RUNTIME_RELEASE_ADMISSION_PYTHON_AIRGAP_GRAND_TOTAL=7265/7265 PASS")
+        print("ALPHA4_RUNTIME_RELEASE_ADMISSION_PYTHON_RUNTIME_ISOLATION=PASS")
         print("ALPHA4_RUNTIME_RELEASE_ADMISSION_ARCHIVE_BINDING=EXACT")
         print("ALPHA4_RUNTIME_PUBLIC_ASSURANCE_REPRESENTATIONS=OPERATIONAL,RELATIONAL,CAUSAL")
         print("ALPHA4_RUNTIME_PUBLIC_POST_BUILD_FORMAL_ASSURANCE=PASS")
