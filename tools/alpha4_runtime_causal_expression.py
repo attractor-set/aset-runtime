@@ -42,6 +42,133 @@ class CausalNet:
     transitions: tuple[CausalTransition, ...]
 
 
+EXPECTED_CAUSAL_CONTRACTS: dict[str, tuple[str, frozenset[str], frozenset[str], dict[str, str]]] = {
+    "START-FRESH": (
+        "ASET-RUNTIME-COMPONENT-START-FRESH",
+        frozenset({"EXACT_START", "FRESH_ID"}),
+        frozenset({"ADD_START"}),
+        {
+            "ACCEPTED": "TRUE",
+            "CODE": "ATTEMPT_STARTED",
+            "STATE_CHANGED": "TRUE",
+            "SEED_ACTION": "STUTTER",
+            "SEED_EFFECT": "FALSE",
+        },
+    ),
+    "START-REPLAY": (
+        "ASET-RUNTIME-COMPONENT-START-REPLAY",
+        frozenset({"EXACT_START", "EXACT_START_REPLAY"}),
+        frozenset({"PRESERVE_STATE"}),
+        {
+            "ACCEPTED": "TRUE",
+            "CODE": "IDEMPOTENT_REPLAY",
+            "STATE_CHANGED": "FALSE",
+            "SEED_ACTION": "STUTTER",
+            "SEED_EFFECT": "FALSE",
+        },
+    ),
+    "REJECT-START-CONFLICT": (
+        "ASET-RUNTIME-COMPONENT-REJECT-START-CONFLICT",
+        frozenset({"EXACT_START", "START_CONFLICT"}),
+        frozenset({"PRESERVE_STATE"}),
+        {
+            "ACCEPTED": "FALSE",
+            "CODE": "ATTEMPT_IDENTITY_CONFLICT",
+            "STATE_CHANGED": "FALSE",
+            "SEED_ACTION": "STUTTER",
+            "SEED_EFFECT": "FALSE",
+        },
+    ),
+    "END-RESULT": (
+        "ASET-RUNTIME-COMPONENT-END-RESULT",
+        frozenset({"EXACT_TERMINAL", "EXACT_RUNNING", "FRESH_TERMINAL", "KIND_RESULT"}),
+        frozenset({"ADD_TERMINAL"}),
+        {
+            "ACCEPTED": "TRUE",
+            "CODE": "ATTEMPT_ENDED_WITH_RESULT",
+            "STATE_CHANGED": "TRUE",
+            "SEED_ACTION": "STUTTER",
+            "SEED_EFFECT": "FALSE",
+        },
+    ),
+    "END-NO-RESULT": (
+        "ASET-RUNTIME-COMPONENT-END-NO-RESULT",
+        frozenset({"EXACT_TERMINAL", "EXACT_RUNNING", "FRESH_TERMINAL", "KIND_NO_RESULT"}),
+        frozenset({"ADD_TERMINAL"}),
+        {
+            "ACCEPTED": "TRUE",
+            "CODE": "ATTEMPT_ENDED_WITH_NO_RESULT",
+            "STATE_CHANGED": "TRUE",
+            "SEED_ACTION": "STUTTER",
+            "SEED_EFFECT": "FALSE",
+        },
+    ),
+    "END-REPLAY": (
+        "ASET-RUNTIME-COMPONENT-END-REPLAY",
+        frozenset({"EXACT_TERMINAL", "EXACT_TERMINAL_REPLAY"}),
+        frozenset({"PRESERVE_STATE"}),
+        {
+            "ACCEPTED": "TRUE",
+            "CODE": "IDEMPOTENT_REPLAY",
+            "STATE_CHANGED": "FALSE",
+            "SEED_ACTION": "STUTTER",
+            "SEED_EFFECT": "FALSE",
+        },
+    ),
+    "REJECT-END-CONFLICT": (
+        "ASET-RUNTIME-COMPONENT-REJECT-END-CONFLICT",
+        frozenset({"EXACT_TERMINAL", "TERMINAL_CONFLICT"}),
+        frozenset({"PRESERVE_STATE"}),
+        {
+            "ACCEPTED": "FALSE",
+            "CODE": "TERMINAL_ATTEMPT_IMMUTABLE",
+            "STATE_CHANGED": "FALSE",
+            "SEED_ACTION": "STUTTER",
+            "SEED_EFFECT": "FALSE",
+        },
+    ),
+    "REJECT-END-NOT-RUNNING": (
+        "ASET-RUNTIME-COMPONENT-REJECT-END-NOT-RUNNING",
+        frozenset({"EXACT_TERMINAL", "NO_TERMINAL_FOR_ID", "NOT_EXACT_RUNNING"}),
+        frozenset({"PRESERVE_STATE"}),
+        {
+            "ACCEPTED": "FALSE",
+            "CODE": "ATTEMPT_NOT_RUNNING",
+            "STATE_CHANGED": "FALSE",
+            "SEED_ACTION": "STUTTER",
+            "SEED_EFFECT": "FALSE",
+        },
+    ),
+}
+
+
+def validate_causal_contract(net: CausalNet) -> int:
+    actual = {item.symbol: item for item in net.transitions}
+    require(
+        set(actual) == set(EXPECTED_CAUSAL_CONTRACTS),
+        "Runtime causal transition surface drift",
+    )
+    for symbol, (component_id, requirements, effects, outputs) in EXPECTED_CAUSAL_CONTRACTS.items():
+        transition = actual[symbol]
+        require(
+            transition.component_id == component_id,
+            f"{symbol}: causal component identity drift",
+        )
+        require(
+            frozenset(transition.requirements) == requirements,
+            f"{symbol}: causal requirement contract drift",
+        )
+        require(
+            frozenset(transition.effects) == effects,
+            f"{symbol}: causal effect contract drift",
+        )
+        require(
+            transition.output_map() == outputs,
+            f"{symbol}: causal output contract drift",
+        )
+    return len(EXPECTED_CAUSAL_CONTRACTS)
+
+
 def _lines(path: Path) -> list[str]:
     return [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
@@ -94,6 +221,9 @@ def parse_causal_net(path: Path = CAUSAL) -> CausalNet:
                 raise CausalExpressionError(f"{symbol}: unsupported statement {body[0]}")
             index += 1
         require(index < len(lines) and lines[index] == "END", f"{symbol}: END missing")
+        require(len(set(requirements)) == len(requirements), f"{symbol}: duplicate requirement")
+        require(len(set(effects)) == len(effects), f"{symbol}: duplicate effect")
+        require(len({key for key, _ in outputs}) == len(outputs), f"{symbol}: duplicate output")
         transitions.append(
             CausalTransition(
                 symbol=symbol,
@@ -127,6 +257,7 @@ def check_causal_bindings() -> CausalNet:
     net = parse_causal_net()
     actual = {item.component_id: item.symbol for item in net.transitions}
     require(actual == manifest_bindings(), "causal component binding mismatch")
+    validate_causal_contract(net)
     for transition in net.transitions:
         outputs = transition.output_map()
         require(outputs.get("SEED_ACTION") == "STUTTER", f"{transition.symbol}: Seed action drift")

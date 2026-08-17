@@ -3,14 +3,18 @@ from __future__ import annotations
 from pathlib import Path
 
 from tools.alpha4_runtime_causal_expression import (
+    EXPECTED_CAUSAL_CONTRACTS,
+    CausalNet,
     causal_end,
     causal_start,
     check_causal_bindings,
 )
 from tools.alpha4_runtime_paired_expression import (
+    EXPECTED_STACK_EFFECTS,
     bounded_domain,
     operational_end,
     operational_start,
+    parse_operational_words,
     relational_end,
     relational_start,
 )
@@ -29,6 +33,13 @@ def check_representation_source_independence() -> dict[str, str]:
     lines = _manifest_lines()
     if "SEMANTIC-PRECEDENCE NONE" not in lines:
         raise RuntimeError("Runtime semantic precedence drift")
+    for relation in (
+        "RELATION OPERATIONAL_INTERFACE EXACT_STACK_EFFECT_CONTRACT",
+        "RELATION CAUSAL_CONTRACT CLOSED_WORLD_REQUIREMENT_EFFECT_OUTPUT_CONTRACT",
+        "RELATION OPERATIONAL_CAUSAL_RESULT OBSERVABLE_RESULT_CODE_CONGRUENCE",
+    ):
+        if relation not in lines:
+            raise RuntimeError(f"Runtime assurance relation missing: {relation}")
     sources: dict[str, str] = {}
     for line in lines:
         tokens = line.split()
@@ -45,9 +56,25 @@ def check_representation_source_independence() -> dict[str, str]:
     return sources
 
 
+def check_operational_causal_interface(net: CausalNet) -> tuple[int, int, int]:
+    words = parse_operational_words()
+    transitions = {item.symbol: item for item in net.transitions}
+    if set(words) != set(transitions):
+        raise RuntimeError("Runtime operational/causal transition surface mismatch")
+    result_bindings = 0
+    for symbol, body in words.items():
+        operational_code = body[-1].replace("-", "_")
+        causal_code = transitions[symbol].output_map()["CODE"]
+        if operational_code != causal_code:
+            raise RuntimeError(f"{symbol}: operational/causal result-code mismatch")
+        result_bindings += 1
+    return len(EXPECTED_STACK_EFFECTS), len(EXPECTED_CAUSAL_CONTRACTS), result_bindings
+
+
 def check_triangulated_assurance() -> dict[str, object]:
     sources = check_representation_source_independence()
     net = check_causal_bindings()
+    stack_contracts, causal_contracts, result_bindings = check_operational_causal_interface(net)
     starts, terminals, states = bounded_domain()
     start_checks = 0
     end_checks = 0
@@ -98,6 +125,9 @@ def check_triangulated_assurance() -> dict[str, object]:
             "operational_causal": "PASS",
             "relational_causal": "PASS",
         },
+        "operational_stack_contracts": stack_contracts,
+        "causal_closed_world_contracts": causal_contracts,
+        "operational_causal_result_code_bindings": result_bindings,
         "start_checks": start_checks,
         "end_checks": end_checks,
         "total_checks": total_checks,
@@ -112,6 +142,9 @@ def print_evidence(evidence: dict[str, object]) -> None:
     start = int(evidence["start_checks"])
     end = int(evidence["end_checks"])
     total = int(evidence["total_checks"])
+    stacks = int(evidence["operational_stack_contracts"])
+    causal_contracts = int(evidence["causal_closed_world_contracts"])
+    result_bindings = int(evidence["operational_causal_result_code_bindings"])
     print("ALPHA4_RUNTIME_ASSURANCE_REPRESENTATIONS=OPERATIONAL,RELATIONAL,CAUSAL")
     print("ALPHA4_RUNTIME_ASSURANCE_SEMANTIC_PRECEDENCE=NONE")
     print(f"ALPHA4_RUNTIME_OPERATIONAL_RELATIONAL_CONGRUENCE={total}/{total} PASS")
@@ -120,6 +153,13 @@ def print_evidence(evidence: dict[str, object]) -> None:
     print(f"ALPHA4_RUNTIME_TRIANGULATED_START={start}/{start} PASS")
     print(f"ALPHA4_RUNTIME_TRIANGULATED_END={end}/{end} PASS")
     print(f"ALPHA4_RUNTIME_TRIANGULATED_TOTAL={total}/{total} PASS")
+    print(f"ALPHA4_RUNTIME_OPERATIONAL_STACK_CONTRACTS={stacks}/{stacks} PASS")
+    print(
+        f"ALPHA4_RUNTIME_CAUSAL_CLOSED_WORLD_CONTRACTS={causal_contracts}/{causal_contracts} PASS"
+    )
+    print(
+        f"ALPHA4_RUNTIME_OPERATIONAL_CAUSAL_RESULT_CODES={result_bindings}/{result_bindings} PASS"
+    )
     print("ALPHA4_RUNTIME_REPRESENTATION_SOURCE_INDEPENDENCE=PASS")
     print("ALPHA4_RUNTIME_TRIANGULATED_SEED_ACTION=STUTTER")
     print("ALPHA4_RUNTIME_TRIANGULATED_EXPRESSION=PASS")

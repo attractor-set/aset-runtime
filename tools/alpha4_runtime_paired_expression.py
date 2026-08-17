@@ -60,6 +60,17 @@ EXPECTED_WORDS = {
     ),
 }
 
+EXPECTED_STACK_EFFECTS = {
+    "START-FRESH": (("state", "start"), ("state", "result")),
+    "START-REPLAY": (("state", "start"), ("state", "result")),
+    "REJECT-START-CONFLICT": (("state", "start"), ("state", "result")),
+    "END-RESULT": (("state", "terminal"), ("state", "result")),
+    "END-NO-RESULT": (("state", "terminal"), ("state", "result")),
+    "END-REPLAY": (("state", "terminal"), ("state", "result")),
+    "REJECT-END-CONFLICT": (("state", "terminal"), ("state", "result")),
+    "REJECT-END-NOT-RUNNING": (("state", "terminal"), ("state", "result")),
+}
+
 START_FIELDS = {"attempt_id", "attempt_digest", "runtime_binding", "descriptor_binding"}
 TERMINAL_FIELDS = {
     "attempt_id",
@@ -72,14 +83,26 @@ TERMINAL_FIELDS = {
 TERMINAL_KINDS = {"RESULT", "NO_RESULT"}
 
 
-def parse_operational_words() -> dict[str, tuple[str, ...]]:
-    text = FORTH.read_text(encoding="utf-8")
-    pattern = re.compile(r":\s+(?P<word>[A-Z0-9-]+)\s+\([^)]*--[^)]*\)\s+(?P<body>.*?)\s*;")
-    words = {
-        match.group("word"): tuple(match.group("body").split()) for match in pattern.finditer(text)
+def parse_operational_words(path: Path = FORTH) -> dict[str, tuple[str, ...]]:
+    text = path.read_text(encoding="utf-8")
+    pattern = re.compile(
+        r":\s+(?P<word>[A-Z0-9-]+)\s+"
+        r"\(\s*(?P<inputs>.*?)\s*--\s*(?P<outputs>.*?)\s*\)\s+"
+        r"(?P<body>.*?)\s*;"
+    )
+    matches = list(pattern.finditer(text))
+    words = {match.group("word"): tuple(match.group("body").split()) for match in matches}
+    stacks = {
+        match.group("word"): (
+            tuple(match.group("inputs").split()),
+            tuple(match.group("outputs").split()),
+        )
+        for match in matches
     }
     if words != EXPECTED_WORDS:
         raise RuntimeError(f"restricted operational vocabulary mismatch: {words!r}")
+    if stacks != EXPECTED_STACK_EFFECTS:
+        raise RuntimeError(f"restricted operational stack contract mismatch: {stacks!r}")
     return words
 
 
