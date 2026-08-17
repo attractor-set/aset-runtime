@@ -4,6 +4,7 @@ import json
 import shutil
 from pathlib import Path
 
+from tools.alpha4_runtime_manifest import parse_runtime_manifest
 from tools.alpha4_runtime_seed_extension import (
     check_seed_companion_bases,
     parse_seed_binding,
@@ -28,12 +29,8 @@ def _lines(path: Path) -> list[str]:
 
 
 def manifest_records(root: Path = ROOT) -> list[dict[str, str]]:
-    lines = _lines(root / "runtime/alpha4/RUNTIME.aset")
-    causal: dict[str, str] = {}
-    for line in lines:
-        if line.startswith("CAUSAL-BIND "):
-            _, component_id, causal_transition = line.split()
-            causal[component_id] = causal_transition
+    plan = parse_runtime_manifest(root)
+    causal = {item.component_id: item.causal_transition for item in plan.causal_bindings}
     operational_map = {
         "ASET-RUNTIME-COMPONENT-START-FRESH": "START-FRESH",
         "ASET-RUNTIME-COMPONENT-START-REPLAY": "START-REPLAY",
@@ -44,25 +41,18 @@ def manifest_records(root: Path = ROOT) -> list[dict[str, str]]:
         "ASET-RUNTIME-COMPONENT-REJECT-END-CONFLICT": "REJECT-END-CONFLICT",
         "ASET-RUNTIME-COMPONENT-REJECT-END-NOT-RUNNING": "REJECT-END-NOT-RUNNING",
     }
-    records: list[dict[str, str]] = []
-    for line in lines:
-        if not line.startswith("PAIR "):
-            continue
-        parts = line.split()
-        require(len(parts) == 6, f"bad PAIR declaration: {line}")
-        _, component_id, transition_binding, relational, _reflection, pairing = parts
-        require(component_id in causal, f"causal binding missing for {component_id}")
-        records.append(
-            {
-                "component_id": component_id,
-                "transition_binding": transition_binding,
-                "operational": operational_map[component_id],
-                "relational": relational,
-                "causal": causal[component_id],
-                "pairing": pairing,
-                "seed_extension": "PRESERVE-SEED-STATE",
-            }
-        )
+    records = [
+        {
+            "component_id": pair.component_id,
+            "transition_binding": pair.transition,
+            "operational": operational_map[pair.component_id],
+            "relational": pair.formal_operator,
+            "causal": causal[pair.component_id],
+            "pairing": pair.pairing_theorem,
+            "seed_extension": "PRESERVE-SEED-STATE",
+        }
+        for pair in plan.pairs
+    ]
     require(len(records) == 8, "Runtime release companion requires eight component records")
     return records
 
@@ -192,7 +182,20 @@ def _exact_terminal(value: dict[str, Any]) -> bool:
         if not isinstance(value[field], str) or not value[field]:
             return False
     evidence = value["evidence_bindings"]
-    return isinstance(evidence, list) and all(isinstance(item, str) and item for item in evidence)
+    return (
+        isinstance(evidence, list)
+        and all(isinstance(item, str) and item for item in evidence)
+        and len(evidence) == len(set(evidence))
+    )
+
+
+def _terminal_equal(left: dict[str, Any], right: dict[str, Any]) -> bool:
+    if not _exact_terminal(left) or not _exact_terminal(right):
+        return False
+    scalar_fields = TERMINAL_FIELDS - {{"evidence_bindings"}}
+    return all(left[field] == right[field] for field in scalar_fields) and set(
+        left["evidence_bindings"]
+    ) == set(right["evidence_bindings"])
 
 
 def _runtime_result(accepted: bool, code: str, changed: bool) -> dict[str, Any]:
@@ -234,7 +237,7 @@ def end_attempt(
     same_id = [
         item for item in next_runtime["terminals"] if item["attempt_id"] == terminal["attempt_id"]
     ]
-    if terminal in same_id:
+    if any(_terminal_equal(item, terminal) for item in same_id):
         return next_runtime, next_seed, _runtime_result(True, "IDEMPOTENT_REPLAY", False)
     if same_id:
         return next_runtime, next_seed, _runtime_result(False, "TERMINAL_ATTEMPT_IMMUTABLE", False)

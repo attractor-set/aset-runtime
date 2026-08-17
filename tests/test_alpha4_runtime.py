@@ -99,3 +99,27 @@ def test_terminal_identity_conflict_covers_terminal_binding() -> None:
     assert next_state == ended
     assert result["code"] == "TERMINAL_ATTEMPT_IMMUTABLE"
     assert result["accepted"] is False
+
+
+def test_terminal_evidence_bindings_have_formal_set_identity() -> None:
+    start = {
+        "attempt_id": "a-set",
+        "attempt_digest": "d-set",
+        "runtime_binding": "runtime:set",
+        "descriptor_binding": "descriptor:set",
+    }
+    running, _ = operational_start({"starts": [], "terminals": []}, start)
+    terminal = {
+        "attempt_id": "a-set",
+        "attempt_digest": "d-set",
+        "terminal_kind": "RESULT",
+        "terminal_digest": "t-set",
+        "terminal_binding": "terminal-binding:set",
+        "evidence_bindings": ["e0", "e1"],
+    }
+    ended, _ = operational_end(running, terminal)
+    reordered = {**terminal, "evidence_bindings": ["e1", "e0"]}
+    next_state, result = operational_end(ended, reordered)
+    assert next_state == ended
+    assert result["accepted"] is True
+    assert result["code"] == "IDEMPOTENT_REPLAY"

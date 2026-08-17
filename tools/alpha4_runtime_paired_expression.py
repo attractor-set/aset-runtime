@@ -6,6 +6,11 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
+from tools.alpha4_runtime_relational_expression import (
+    relational_end_from_source,
+    relational_start_from_source,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 FORTH = ROOT / "runtime/alpha4/operational/components.forth"
 
@@ -121,7 +126,20 @@ def exact_terminal(value: dict[str, Any]) -> bool:
         if not isinstance(value[field], str) or not value[field]:
             return False
     evidence = value["evidence_bindings"]
-    return isinstance(evidence, list) and all(isinstance(item, str) and item for item in evidence)
+    return (
+        isinstance(evidence, list)
+        and all(isinstance(item, str) and item for item in evidence)
+        and len(evidence) == len(set(evidence))
+    )
+
+
+def terminal_record_equal(left: dict[str, Any], right: dict[str, Any]) -> bool:
+    if not exact_terminal(left) or not exact_terminal(right):
+        return False
+    scalar_fields = TERMINAL_FIELDS - {"evidence_bindings"}
+    return all(left[field] == right[field] for field in scalar_fields) and set(
+        left["evidence_bindings"]
+    ) == set(right["evidence_bindings"])
 
 
 def _result(accepted: bool, code: str, changed: bool) -> dict[str, Any]:
@@ -164,17 +182,7 @@ def operational_start(
 def relational_start(
     state: dict[str, list[dict[str, Any]]], start: dict[str, Any]
 ) -> tuple[dict[str, list[dict[str, Any]]], dict[str, Any]]:
-    if not exact_start(start):
-        raise ValueError("exact start record required")
-    current = _copy_state(state)
-    identical = start in current["starts"]
-    identifier_exists = any(item["attempt_id"] == start["attempt_id"] for item in current["starts"])
-    if identical:
-        return current, _result(True, "IDEMPOTENT_REPLAY", False)
-    if identifier_exists:
-        return current, _result(False, "ATTEMPT_IDENTITY_CONFLICT", False)
-    current["starts"].append(deepcopy(start))
-    return current, _result(True, "ATTEMPT_STARTED", True)
+    return relational_start_from_source(state, start)
 
 
 def operational_end(
@@ -187,7 +195,7 @@ def operational_end(
     same_terminal_id = [
         item for item in current["terminals"] if item["attempt_id"] == terminal["attempt_id"]
     ]
-    if terminal in same_terminal_id:
+    if any(terminal_record_equal(item, terminal) for item in same_terminal_id):
         return current, _result(True, "IDEMPOTENT_REPLAY", False)
     if same_terminal_id:
         return current, _result(False, "TERMINAL_ATTEMPT_IMMUTABLE", False)
@@ -202,27 +210,62 @@ def operational_end(
 def relational_end(
     state: dict[str, list[dict[str, Any]]], terminal: dict[str, Any]
 ) -> tuple[dict[str, list[dict[str, Any]]], dict[str, Any]]:
-    if not exact_terminal(terminal):
-        raise ValueError("exact terminal record required")
-    current = _copy_state(state)
-    identical = terminal in current["terminals"]
-    identifier_exists = any(
-        item["attempt_id"] == terminal["attempt_id"] for item in current["terminals"]
-    )
-    if identical:
-        return current, _result(True, "IDEMPOTENT_REPLAY", False)
-    if identifier_exists:
-        return current, _result(False, "TERMINAL_ATTEMPT_IMMUTABLE", False)
-    matching = _matching_start(current, terminal)
-    if not matching:
-        return current, _result(False, "ATTEMPT_NOT_RUNNING", False)
-    current["terminals"].append(deepcopy(terminal))
-    code = (
-        "ATTEMPT_ENDED_WITH_RESULT"
-        if terminal["terminal_kind"] == "RESULT"
-        else "ATTEMPT_ENDED_WITH_NO_RESULT"
-    )
-    return current, _result(True, code, True)
+    return relational_end_from_source(state, terminal)
+
+
+def field_sensitivity_check() -> dict[str, int]:
+    base_start = {
+        "attempt_id": "sensitive-attempt",
+        "attempt_digest": "digest:0",
+        "runtime_binding": "runtime:0",
+        "descriptor_binding": "descriptor:0",
+    }
+    running = {"starts": [deepcopy(base_start)], "terminals": []}
+    start_cases = 0
+    for field, replacement in (
+        ("runtime_binding", "runtime:1"),
+        ("descriptor_binding", "descriptor:1"),
+    ):
+        candidate = {**base_start, field: replacement}
+        operational = operational_start(running, candidate)
+        relational = relational_start(running, candidate)
+        if operational != relational or operational[1]["code"] != "ATTEMPT_IDENTITY_CONFLICT":
+            raise RuntimeError(f"Runtime start field sensitivity failed: {field}")
+        start_cases += 1
+
+    base_terminal = {
+        "attempt_id": base_start["attempt_id"],
+        "attempt_digest": base_start["attempt_digest"],
+        "terminal_kind": "RESULT",
+        "terminal_digest": "terminal:0",
+        "terminal_binding": "terminal-binding:0",
+        "evidence_bindings": ["e0", "e1"],
+    }
+    ended = {"starts": [deepcopy(base_start)], "terminals": [deepcopy(base_terminal)]}
+    terminal_cases = 0
+    for field, replacement in (
+        ("terminal_binding", "terminal-binding:1"),
+        ("evidence_bindings", ["e0", "e2"]),
+    ):
+        candidate = {**base_terminal, field: replacement}
+        operational = operational_end(ended, candidate)
+        relational = relational_end(ended, candidate)
+        if operational != relational or operational[1]["code"] != "TERMINAL_ATTEMPT_IMMUTABLE":
+            raise RuntimeError(f"Runtime terminal field sensitivity failed: {field}")
+        terminal_cases += 1
+
+    reordered = {**base_terminal, "evidence_bindings": ["e1", "e0"]}
+    operational = operational_end(ended, reordered)
+    relational = relational_end(ended, reordered)
+    if operational != relational or operational[1]["code"] != "IDEMPOTENT_REPLAY":
+        raise RuntimeError("Runtime evidence set-order invariance failed")
+    evidence_set_cases = 1
+    return {
+        "start": start_cases,
+        "terminal": terminal_cases,
+        "evidence_set": evidence_set_cases,
+        "total": start_cases + terminal_cases + evidence_set_cases,
+    }
 
 
 def bounded_domain() -> tuple[
@@ -361,12 +404,17 @@ def main() -> int:
     parse_operational_words()
     counts = bounded_pairing_check()
     safety = bounded_safety_check()
+    sensitivity = field_sensitivity_check()
     print("ALPHA4_RUNTIME_OPERATIONAL_WORDS=8/8 PASS")
     print(f"ALPHA4_RUNTIME_START_PAIRED_CASES={counts['start']}/{counts['start']} PASS")
     print(f"ALPHA4_RUNTIME_END_PAIRED_CASES={counts['end']}/{counts['end']} PASS")
     print(f"ALPHA4_RUNTIME_PAIRED_CASES={counts['total']}/{counts['total']} PASS")
     print(f"ALPHA4_RUNTIME_BOUNDED_SAFETY={safety['total']}/{safety['total']} PASS")
     print("ALPHA4_RUNTIME_APPEND_ONLY_BOUNDARY=PASS")
+    print(
+        "ALPHA4_RUNTIME_IDENTITY_FIELD_SENSITIVITY="
+        f"{sensitivity['total']}/{sensitivity['total']} PASS"
+    )
     print("ALPHA4_RUNTIME_PAIRED_EXPRESSION=PASS")
     return 0
 

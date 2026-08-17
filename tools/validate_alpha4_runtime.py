@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from tools.alpha4_runtime_causal_expression import check_causal_bindings
+from tools.alpha4_runtime_manifest import parse_runtime_manifest
 from tools.alpha4_runtime_paired_expression import EXPECTED_WORDS, parse_operational_words
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,6 +24,7 @@ def lines(path: Path) -> list[str]:
 
 
 def main() -> int:
+    plan = parse_runtime_manifest(ROOT)
     values = lines(MANIFEST)
     require(
         values[0] == "ASET-RUNTIME 1 ASET-RUNTIME-ALPHA4 0.1.0-alpha.4",
@@ -83,6 +85,8 @@ def main() -> int:
         "Recognition remains local to Seed" in readme,
         "Runtime Seed authority boundary documentation missing",
     )
+    print("ALPHA4_RUNTIME_BINDING_PLAN=PASS")
+    print(f"ALPHA4_RUNTIME_BINDING_PLAN_PROOFS={len(plan.proofs)}/{len(plan.proofs)} PASS")
     print("ALPHA4_RUNTIME_SUBJECT=PASS")
     print("ALPHA4_RUNTIME_COMPONENT_PAIRS=8/8 PASS")
     print("ALPHA4_RUNTIME_CAUSAL_BINDINGS=8/8 PASS")
