@@ -23,8 +23,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          seed_tag="seed-0.4alpha-3way"
-          seed_commit="0028f1d25a4f1d052a9b998baf402898446ac599"
+          seed_tag="seed-0.4alpha-assurance-anchor-1"
+          seed_commit="88378c0c0baff4e71d3285248cc9050c1318ceec"
           seed_root="$RUNNER_TEMP/aset-seed-alpha4"
           seed_release_zip="$RUNNER_TEMP/ASET-Seed-0.4alpha.zip"
           seed_profiles_zip="$RUNNER_TEMP/ASET-Seed-0.4alpha-profiles.zip"
@@ -42,9 +42,9 @@ jobs:
             --output "$seed_profiles_zip" \
             "https://github.com/attractor-set/aset-seed/releases/download/$seed_tag/ASET-Seed-0.4alpha-profiles.zip"
 
-          echo "4170d9111c353c3607cf9ada3398c15007acfed7b2d486f5376c72d3f13ed331  $seed_release_zip" \
+          echo "23ed1dee95b634bcc744089cfae67aebdac53883f47366d176d154b2d39f15ab  $seed_release_zip" \
             | sha256sum --check
-          echo "790588c145a390da6d47ac08901945253904aa053d170bfd35f6fb20dd1ae5a1  $seed_profiles_zip" \
+          echo "e6b45f74a56f2f6235ed2c74ae67ca0a0017e5c21574b996de7f1ce9965bdad7  $seed_profiles_zip" \
             | sha256sum --check
 
           mkdir -p "$seed_release_unpack" "$seed_profiles_unpack"
