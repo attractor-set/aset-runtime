@@ -114,7 +114,12 @@ def check_release_admission(
         airgap.get("semantic_source_runtime_dependency") == "NONE"
         and airgap.get("generator_runtime_dependency") == "NONE"
         and airgap.get("companion_import_surface") == "RESTRICTED"
-        and airgap.get("companion_file_access") == "MATERIALIZED_PROFILE_TREE_READ_ONLY",
+        and airgap.get("companion_file_access") == "MATERIALIZED_PROFILE_TREE_READ_ONLY"
+        and airgap.get("companion_dynamic_builtins") == "DENIED"
+        and airgap.get("companion_filesystem_method_aliasing") == "DENIED"
+        and airgap.get("companion_seed_loader_exec") == "EXACT_SEED_BASE_BYTES_ONLY"
+        and airgap.get("runtime_capability_isolation") == "PASS"
+        and airgap.get("process_isolation") == "NOT_CLAIMED",
         "Runtime Python air-gap independence boundary drift",
     )
 
@@ -164,7 +169,11 @@ def check_release_admission(
             "structural_cases": airgap["cases"]["total"],
             "identity_sensitivity_cases": airgap["cases"]["identity_sensitivity"],
             "grand_total_cases": airgap["cases"]["grand_total"],
-            "runtime_isolation": "PASS",
+            "runtime_capability_isolation": "PASS",
+            "process_isolation": "NOT_CLAIMED",
+            "dynamic_builtins": "DENIED",
+            "filesystem_method_aliasing": "DENIED",
+            "seed_loader_exec": "EXACT_SEED_BASE_BYTES_ONLY",
         },
         "release": {
             "tree_digest": release_tree,
@@ -231,7 +240,8 @@ def main() -> int:
         print(f"ALPHA4_RUNTIME_RELEASE_ADMISSION_PYTHON_AIRGAP={cases}/{cases} PASS")
         print("ALPHA4_RUNTIME_RELEASE_ADMISSION_PYTHON_AIRGAP_IDENTITY_SENSITIVITY=5/5 PASS")
         print("ALPHA4_RUNTIME_RELEASE_ADMISSION_PYTHON_AIRGAP_GRAND_TOTAL=7265/7265 PASS")
-        print("ALPHA4_RUNTIME_RELEASE_ADMISSION_PYTHON_RUNTIME_ISOLATION=PASS")
+        print("ALPHA4_RUNTIME_RELEASE_ADMISSION_PYTHON_RUNTIME_CAPABILITY_ISOLATION=PASS")
+        print("ALPHA4_RUNTIME_RELEASE_ADMISSION_PYTHON_PROCESS_ISOLATION=NOT_CLAIMED")
         print("ALPHA4_RUNTIME_RELEASE_ADMISSION_ARCHIVE_BINDING=EXACT")
         print("ALPHA4_RUNTIME_PUBLIC_ASSURANCE_REPRESENTATIONS=OPERATIONAL,RELATIONAL,CAUSAL")
         print("ALPHA4_RUNTIME_PUBLIC_POST_BUILD_FORMAL_ASSURANCE=PASS")
